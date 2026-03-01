@@ -1,7 +1,4 @@
-#ifndef GAME_HPP
-#define GAME_HPP
+#pragma once
 
 #include "32blit.hpp"
 #include "player.hpp"
-
-#endif // GAME_HPP

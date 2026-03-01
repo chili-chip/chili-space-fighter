@@ -1,4 +1,12 @@
 #include "player.hpp"
+#include <cstdlib>
+
+#define STARTING_HEALTH 255
+#define STARTING_SPEED 100
+#define STARTING_MANEUVRABILITY 1.5f
+#define STARTING_POSITION_X 64
+#define STARTING_POSITION_Y 64
+#define STARTING_SHIP_SPRITE_INDEX 1
 
 Player::Player() {
     screen.sprites = Surface::load(asset_ships);
@@ -41,6 +49,13 @@ void Player::fire() {
 }
 
 void Player::draw(uint32_t time) {
+    // draw particles first (background)
+    for (auto p : particle_gen.particles) {
+        screen.pen = Pen(255, 200, 100);
+        screen.pixel(Point(p->pos));
+    }
+
+    // then draw the ship
     if (movement_vector.x > 0 && screen_coords.x < 119) {
         screen.sprite(ship_sprite_index+1, screen_coords);
     }
@@ -54,4 +69,6 @@ void Player::draw(uint32_t time) {
 
 void Player::update(uint32_t time) {
     move();
+    
+    particle_gen.update(time, position_vector);
 }

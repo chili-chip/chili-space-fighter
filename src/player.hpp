@@ -1,16 +1,8 @@
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#pragma once
 
 #include "32blit.hpp"
 #include "assets.hpp"
-
-#define STARTING_HEALTH 255
-#define STARTING_SPEED 100
-#define STARTING_MANEUVRABILITY 1.5f
-#define STARTING_POSITION_X 64
-#define STARTING_POSITION_Y 64
-
-#define STARTING_SHIP_SPRITE_INDEX 1
+#include "engine_particle_generator.hpp"
 
 using namespace blit;
 
@@ -23,6 +15,8 @@ private:
     float maneuvrability;
     uint8_t health;
     int ship_sprite_index;
+    blit::EngineParticleGenerator particle_gen;
+
 
 public:
     Player();
@@ -36,4 +30,3 @@ public:
 
 
 };
-#endif // PLAYER_HPP
