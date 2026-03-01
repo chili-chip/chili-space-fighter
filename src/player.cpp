@@ -70,5 +70,5 @@ void Player::draw(uint32_t time) {
 void Player::update(uint32_t time) {
     move();
     
-    particle_gen.update(time, position_vector);
+    particle_gen.update(time, position_vector, movement_vector);
 }

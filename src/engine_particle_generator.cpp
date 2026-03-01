@@ -2,7 +2,7 @@
 #include <cstdlib>
 
 #define PARTICLE_COUNT 50
-#define PARTICLE_LIFETIME_MS 30
+#define PARTICLE_LIFETIME_MS 20
 #define PARTICLE_VELOCITY 200.0f
 
 using namespace blit;
@@ -17,8 +17,8 @@ EngineParticleGenerator::EngineParticleGenerator()
   force = Vec2(0, 0);
 }
 
-void EngineParticleGenerator::update(uint32_t time_ms, const Vec2 ship_pos) {
-  this->generate = [ship_pos]() -> Particle* {
+std::function<Particle*(void)> EngineParticleGenerator::forward_thrust(const Vec2 &ship_pos) {
+  return [ship_pos]() -> Particle* {
     Vec2 particle_pos = ship_pos + Vec2(4, 4);
 
     Vec2 particle_vel = Vec2(0, 1.0f);
@@ -30,6 +30,13 @@ void EngineParticleGenerator::update(uint32_t time_ms, const Vec2 ship_pos) {
 
     return new Particle(particle_pos, particle_vel);
   };
+}
 
+void EngineParticleGenerator::update(uint32_t time_ms, const Vec2 ship_pos, const Vec2 ship_movement_vector) {
+  if (ship_movement_vector.y < 0) {
+    generate = forward_thrust(ship_pos);
+  } else {
+    generate = []() -> Particle* { return new Particle(Vec2(-10,0), Vec2(0,0)); };
+  }
   ParticleGenerator::update(time_ms);
 }
