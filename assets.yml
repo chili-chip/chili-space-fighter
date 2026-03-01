@@ -7,4 +7,6 @@ assets.cpp:
     name: asset_no_image
   assets/ships.png:
     name: asset_ships
+  assets/projectiles.png:
+    name: asset_projectiles
 
