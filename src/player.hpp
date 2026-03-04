@@ -9,12 +9,12 @@ using namespace blit;
 
 class PlayerBullet {
 private:
-    Vec2 position_vector;
+    Point position_coords;
     Vec2 movement_vector;
     float speed;
 
 public:
-    PlayerBullet(Vec2 position_vector);
+    PlayerBullet(Point position_coords);
     ~PlayerBullet();
 
     bool is_off_screen();

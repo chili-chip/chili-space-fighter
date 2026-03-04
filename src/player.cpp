@@ -8,10 +8,10 @@
 #define STARTING_POSITION_Y 64
 #define STARTING_SHIP_SPRITE_INDEX 1
 
-PlayerBullet::PlayerBullet(Vec2 spawn_position) {
-    position_vector = spawn_position;
+PlayerBullet::PlayerBullet(Point spawn_position) {
+    position_coords = spawn_position;
     movement_vector = Vec2(0, -1);
-    speed = 0.3f;
+    speed = 0.5f;
 }
 
 PlayerBullet::~PlayerBullet() {
@@ -19,16 +19,19 @@ PlayerBullet::~PlayerBullet() {
 }
 
 bool PlayerBullet::is_off_screen() {
-    return position_vector.y < 0;
+    return position_coords.y < 0;
 }
 
 void PlayerBullet::update(uint32_t dt) {
-    position_vector += movement_vector * speed * dt;
+    position_coords += movement_vector * speed * dt;
 }
 
 void PlayerBullet::draw(uint32_t time) {
+    Point projectile1_offset = Point(-3, 0);
+    Point projectile2_offset = Point(4, 0);
     screen.sprites = Surface::load(asset_projectiles);
-    screen.sprite(0, Point(position_vector));
+    screen.sprite(2, Point(position_coords + projectile1_offset));
+    screen.sprite(2, Point(position_coords + projectile2_offset));
 }
 
 Player::Player() {
@@ -75,7 +78,7 @@ void Player::move() {
 
 void Player::fire() {
     if (buttons & Button::A && fire_cooldown == 0 && !fired_this_frame) {
-        bullets.push_back(new PlayerBullet(position_vector));
+        bullets.push_back(new PlayerBullet(screen_coords));
         fire_cooldown = 255;
         fired_this_frame = true;
     }
@@ -132,8 +135,6 @@ void Player::draw(uint32_t time) {
     else {
         screen.sprite(ship_sprite_index, screen_coords);
     }
-
-    draw_cooldown_bar();
 }
 
 void Player::update(uint32_t time) {
