@@ -7,15 +7,19 @@
 
 using namespace blit;
 
-class PlayerBullet {
+class Projectile {
 private:
     Point position_coords;
-    Vec2 movement_vector;
+    Vec2 velocity;
+
     float speed;
+    int damage;
+
+    int sprite_index;
 
 public:
-    PlayerBullet(Point position_coords);
-    ~PlayerBullet();
+    Projectile(Point position_coords);
+    ~Projectile();
 
     bool is_off_screen();
 
@@ -23,17 +27,30 @@ public:
     void draw(uint32_t time);
 };
 
+class Ship {
+private:
+    Vec2 position;
+    Vec2 velocity;
+    float angle;
+
+    float speed;
+    float agility;
+    int health;
+
+    int sprite_index;
+};
+
+
 class Player {
 private:
-    Vec2 position_vector;
-    Point screen_coords;
-    Vec2 movement_vector;
+    Vec2 position;
+    Vec2 velocity;
     uint8_t speed;
     float maneuvrability;
     uint8_t health;
     int ship_sprite_index;
     blit::EngineParticleGenerator particle_gen;
-    std::vector<PlayerBullet*> bullets;
+    std::vector<Projectile*> bullets;
     uint8_t fire_cooldown;
     uint32_t timer;
     uint32_t last_update_time;

@@ -8,25 +8,25 @@
 #define STARTING_POSITION_Y 64
 #define STARTING_SHIP_SPRITE_INDEX 1
 
-PlayerBullet::PlayerBullet(Point spawn_position) {
+Projectile::Projectile(Point spawn_position) {
     position_coords = spawn_position;
-    movement_vector = Vec2(0, -1);
+    velocity = Vec2(0, -1);
     speed = 0.5f;
 }
 
-PlayerBullet::~PlayerBullet() {
+Projectile::~Projectile() {
 
 }
 
-bool PlayerBullet::is_off_screen() {
+bool Projectile::is_off_screen() {
     return position_coords.y < 0;
 }
 
-void PlayerBullet::update(uint32_t dt) {
-    position_coords += movement_vector * speed * dt;
+void Projectile::update(uint32_t dt) {
+    position_coords += velocity * speed * dt;
 }
 
-void PlayerBullet::draw(uint32_t time) {
+void Projectile::draw(uint32_t time) {
     Point projectile1_offset = Point(-3, 0);
     Point projectile2_offset = Point(4, 0);
     screen.sprites = Surface::load(asset_projectiles);
@@ -35,12 +35,11 @@ void PlayerBullet::draw(uint32_t time) {
 }
 
 Player::Player() {
-    position_vector = Vec2(STARTING_POSITION_X, STARTING_POSITION_Y);
-    screen_coords = Point(STARTING_POSITION_X, STARTING_POSITION_Y);
+    position = Vec2(STARTING_POSITION_X, STARTING_POSITION_Y);
     speed = STARTING_SPEED;
     maneuvrability = STARTING_MANEUVRABILITY;
     health = STARTING_HEALTH;
-    movement_vector = Vec2(0, 0);
+    velocity = Vec2(0, 0);
     ship_sprite_index = STARTING_SHIP_SPRITE_INDEX;
     fire_cooldown = 0;
     timer = 0;
@@ -56,29 +55,27 @@ Player::~Player() {
 }
 
 void Player::move() {
-    movement_vector = Vec2(0, 0);
-    if (buttons & Button::DPAD_UP)    movement_vector.y -= 1.0f;
-    if (buttons & Button::DPAD_DOWN)  movement_vector.y += 1.0f;
-    if (buttons & Button::DPAD_LEFT)  movement_vector.x -= 1.0f;
-    if (buttons & Button::DPAD_RIGHT) movement_vector.x += 1.0f;
+    velocity = Vec2(0, 0);
+    if (buttons & Button::DPAD_UP)    velocity.y -= 1.0f;
+    if (buttons & Button::DPAD_DOWN)  velocity.y += 1.0f;
+    if (buttons & Button::DPAD_LEFT)  velocity.x -= 1.0f;
+    if (buttons & Button::DPAD_RIGHT) velocity.x += 1.0f;
 
-    if(movement_vector.x || movement_vector.y)
-        movement_vector.normalize();
-    position_vector += movement_vector * maneuvrability;
+    if(velocity.x || velocity.y)
+        velocity.normalize();
+    position += velocity * maneuvrability;
 
     // keep player inside 128×128 screen area
-    if(position_vector.x < 0.0f) position_vector.x = 0.0f;
-    if(position_vector.y < 0.0f) position_vector.y = 0.0f;
-    if(position_vector.x > 119.0f) position_vector.x = 119.0f;
-    if(position_vector.y > 119.0f) position_vector.y = 119.0f;
-
-    screen_coords = Point(position_vector);
+    if(position.x < 0.0f) position.x = 0.0f;
+    if(position.y < 0.0f) position.y = 0.0f;
+    if(position.x > 119.0f) position.x = 119.0f;
+    if(position.y > 119.0f) position.y = 119.0f;
 }
 
 
 void Player::fire() {
     if (buttons & Button::A && fire_cooldown == 0 && !fired_this_frame) {
-        bullets.push_back(new PlayerBullet(screen_coords));
+        bullets.push_back(new Projectile(position));
         fire_cooldown = 255;
         fired_this_frame = true;
     }
@@ -126,14 +123,14 @@ void Player::draw(uint32_t time) {
 
     // draw the ship
     screen.sprites = Surface::load(asset_ships);
-    if (movement_vector.x > 0 && screen_coords.x < 119) {
-        screen.sprite(ship_sprite_index+1, screen_coords);
+    if (velocity.x > 0 && position.x < 119) {
+        screen.sprite(ship_sprite_index+1, position);
     }
-    else if (movement_vector.x < 0 && screen_coords.x > 0) {
-        screen.sprite(ship_sprite_index-1, screen_coords);
+    else if (velocity.x < 0 && position.x > 0) {
+        screen.sprite(ship_sprite_index-1, position);
     }
     else {
-        screen.sprite(ship_sprite_index, screen_coords);
+        screen.sprite(ship_sprite_index, position);
     }
 }
 
@@ -147,7 +144,7 @@ void Player::update(uint32_t time) {
     for (auto b : bullets) {
         b->update(dt);
     }
-    particle_gen.update(time, position_vector, movement_vector);
+    particle_gen.update(time, position, velocity);
 
     last_update_time = time;
 }
