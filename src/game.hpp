@@ -2,3 +2,5 @@
 
 #include "32blit.hpp"
 #include "player.hpp"
+
+using namespace blit;
