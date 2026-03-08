@@ -18,18 +18,26 @@ Player::Player() {
     last_update_time = 0;
 }
 
-InputState Player::get_input() {
-    InputState input;
-    input.up = buttons & Button::DPAD_UP;
-    input.down = buttons & Button::DPAD_DOWN;
-    input.left = buttons & Button::DPAD_LEFT;
-    input.right = buttons & Button::DPAD_RIGHT;
-    input.a = buttons & Button::A;
-    input.b = buttons & Button::B;
-    input.x = buttons & Button::X;
-    input.y = buttons & Button::Y;
-
-    return input;
+ShipControls Player::get_ship_controls() {
+    ShipControls controls;
+    Vec2 movement_vector = Vec2(0, 0);
+    if (buttons & Button::DPAD_UP) {
+        movement_vector += Vec2(0, -1);
+    }
+    if (buttons & Button::DPAD_DOWN) {
+        movement_vector += Vec2(0, 1);
+    }
+    if (buttons & Button::DPAD_LEFT){
+        movement_vector += Vec2(-1, 0);
+    }
+    if (buttons & Button::DPAD_RIGHT) {
+        movement_vector += Vec2(1, 0);
+    }
+    movement_vector.rotate(angle);
+    controls.movement_vector = movement_vector;
+    controls.rotation_direction = 0;
+    controls.fire = buttons & Button::A;
+    return controls;
 }
 
 

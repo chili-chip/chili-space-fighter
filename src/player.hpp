@@ -14,5 +14,5 @@ public:
     Player();
     //~Player();
 
-    InputState get_input() override;
+    ShipControls get_ship_controls() override;
 };

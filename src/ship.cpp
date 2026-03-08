@@ -4,12 +4,18 @@ Surface *ship_spritesheet = Surface::load(asset_ships);
 Surface *projectile_spritesheet = Surface::load(asset_projectiles);
 
 Projectile::Projectile() {
+    sprite_index = 0;
     position = Vec2(-1, -1);
     velocity = Vec2(0, -1);
     speed = 0.3f;
+
 }
 
-Projectile::~Projectile() {
+Projectile::Projectile(int sprite_index) {
+    this->sprite_index = sprite_index;
+    position = Vec2(-1, -1);
+    velocity = Vec2(0, -1);
+    speed = 0.3f;
 
 }
 
@@ -30,45 +36,23 @@ void Projectile::fire(Vec2 position, float angle) {
     this->velocity.rotate(angle);
 }
 
-void Projectile::draw(uint32_t time) {
+void Projectile::draw() {
     if (is_off_screen()) {
         return;
     }
     Vec2 projectile1_offset = Vec2(-3, 0);
     Vec2 projectile2_offset = Vec2(4, 0);
     screen.sprites = projectile_spritesheet;
-    screen.sprite(2, Point(position + projectile1_offset));
-    screen.sprite(2, Point(position + projectile2_offset));
+    screen.sprite(sprite_index, Point(position + projectile1_offset));
+    screen.sprite(sprite_index, Point(position + projectile2_offset));
 }
 
-void Ship::move(InputState input, uint32_t dt) {
-    velocity = Vec2(0, 0);
-    if (input.up){
-        Vec2 movement_vector = Vec2(0, -1);
-        movement_vector.rotate(angle);
-        velocity += movement_vector;
+void Ship::move(Vec2 movement_vector) {
+    if (movement_vector.x != 0 || movement_vector.y != 0) {
+        movement_vector.normalize();
     }
-    if (input.down) {
-        Vec2 movement_vector = Vec2(0, 1);
-        movement_vector.rotate(angle);
-        velocity += movement_vector;
-    }
-    if (input.left){
-        Vec2 movement_vector = Vec2(-1, 0);
-        movement_vector.rotate(angle);
-        velocity += movement_vector;
-    }
-    if (input.right) {
-        Vec2 movement_vector = Vec2(1, 0);
-        movement_vector.rotate(angle);
-        velocity += movement_vector;
-    }
-
-    if(velocity.x || velocity.y) {
-        velocity.normalize();
-    }
-
-    position += velocity * agility * dt;
+    velocity = movement_vector * agility * dt;
+    position += velocity;
 
     // keep player inside 128×128 screen area
     if(position.x < 0.0f) position.x = 0.0f;
@@ -81,24 +65,24 @@ void Ship::rotate(float direction) {
     angle = direction;
 }
 
-void Ship::fire(InputState input) {
-    if (input.a && fire_cooldown == 0 && !fired_this_frame) {
+void Ship::fire() {
+    if (fire_cooldown == 0) {
         projectiles[projectile_index].fire(position, angle);
         projectile_index = (projectile_index + 1) % 10;
         fire_cooldown = 255;
-        fired_this_frame = true;
-    }
-
-    if (!input.a) {
-        fired_this_frame = false;
     }
 }
 
 void Ship::update(uint32_t time) {
-    uint32_t dt = (time - last_update_time);
-    InputState input = get_input();
-    move(input, dt);
-    fire(input);
+    dt = (time - last_update_time);
+    ShipControls controls = get_ship_controls();
+    move(controls.movement_vector);
+    rotate(controls.rotation_direction);
+
+    if (controls.fire) {
+        fire();
+        controls.fire = false;
+    }
     
     for (auto &projectile : projectiles) {
         projectile.update(dt);
@@ -109,22 +93,21 @@ void Ship::update(uint32_t time) {
     last_update_time = time;
 }
 
-void Ship::draw(uint32_t time) {
-    // draw ship sprite at position with rotation
-    // blit::sprite(sprite_index, position, SpriteFlags::rotate(angle));
-
+void Ship::draw() {
     for (auto projectile : projectiles) {
-        projectile.draw(time);
+        projectile.draw();
     }
 
     screen.sprites = ship_spritesheet;
-    if (velocity.x > 0 && position.x < 119) {
-        screen.sprite(sprite_index+1, position);
-    }
-    else if (velocity.x < 0 && position.x > 0) {
-        screen.sprite(sprite_index-1, position);
-    }
-    else {
-        screen.sprite(sprite_index, position);
-    }
+    screen.sprite(sprite_index, position);
+    // Apply only to player
+    // if (velocity.x > 0 && position.x < 119) {
+    //     screen.sprite(sprite_index+1, position);
+    // }
+    // else if (velocity.x < 0 && position.x > 0) {
+    //     screen.sprite(sprite_index-1, position);
+    // }
+    // else {
+    //     screen.sprite(sprite_index, position);
+    // }
 }

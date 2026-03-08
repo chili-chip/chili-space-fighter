@@ -6,10 +6,12 @@
 using namespace blit;
 using namespace std;
 
-struct InputState {
-    bool up, down, left, right, a, b, x, y;
+struct ShipControls{
+    Vec2 movement_vector;
+    float rotation_direction;
+    bool fire;
 };
-typedef struct InputState InputState;
+typedef ShipControls ShipControls;
 
 class Projectile {
 private:
@@ -23,14 +25,18 @@ private:
 
 public:
     Projectile();
-    ~Projectile();
+    Projectile(int sprite_index);
 
     bool is_off_screen();
 
     void fire(Vec2 position, float angle);
 
     void update(uint32_t dt);
-    void draw(uint32_t time);
+    void draw();
+
+    void set_sprite_index(int index) {
+        sprite_index = index;
+    }
 };
 
 class Ship {
@@ -48,17 +54,17 @@ protected:
     int sprite_index;
 
     uint32_t last_update_time;
+    uint32_t dt;
 
     int projectile_index;
     int fire_cooldown;
-    bool fired_this_frame;
 
 public:
-    virtual InputState get_input() = 0;
-    void move(InputState input, uint32_t dt);
+    virtual ShipControls get_ship_controls() = 0;
+    void move(Vec2 movement_vector);
     void rotate(float direction);
-    void fire(InputState input);
+    void fire();
 
-    void update(uint32_t dt);
-    void draw(uint32_t time);
+    void update(uint32_t time);
+    void draw();
 };
