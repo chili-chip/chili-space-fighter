@@ -4,6 +4,7 @@
 #include "engine_particle_generator.hpp"
 #include "ship.hpp"
 #include <cstdlib>
+#include "assets.hpp"
 
 using namespace blit;
 

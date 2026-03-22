@@ -2,6 +2,7 @@
 
 #include "32blit.hpp"
 #include "ship.hpp"
+#include "assets.hpp"
 
 enum class MovementPattern {
     StraightDown,
@@ -21,7 +22,6 @@ struct EnemyPreset {
 class Enemy : public Ship {
 private:
     MovementPattern movement_pattern;
-
     ShipControls get_ship_controls() override;
 
 public:

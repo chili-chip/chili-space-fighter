@@ -2,6 +2,7 @@
 
 using namespace blit;
 
+uint32_t last_update_time = 0;
 Player player;
 
 Enemy enemies[1] = {
@@ -10,12 +11,12 @@ Enemy enemies[1] = {
 
 void init() {
     set_screen_mode(ScreenMode::hires);
-    player = Player();
 }
 
 void render(uint32_t time) {
     screen.pen = Pen(0, 0, 0);
     screen.clear();
+    ProjectileManager::get_instance().draw();
     player.draw();
     for (auto &enemy : enemies) {
         enemy.draw();
@@ -23,8 +24,11 @@ void render(uint32_t time) {
 }
 
 void update(uint32_t time) {
-    player.update(time);
+    uint32_t dt = (time - last_update_time);
+    last_update_time = time;
+    ProjectileManager::get_instance().update(dt);
+    player.update(dt);
     for (auto &enemy : enemies) {
-        enemy.update(time);
+        enemy.update(dt);
     }
 }

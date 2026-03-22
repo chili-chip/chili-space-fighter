@@ -1,71 +1,35 @@
 #pragma once
-
 #include "32blit.hpp"
+#include "projectile_manager.hpp"
 #include "assets.hpp"
 
 using namespace blit;
-using namespace std;
 
-struct ShipControls{
+struct ShipControls {
     Vec2 movement_vector;
     float rotation_direction;
     bool fire;
-};
-typedef ShipControls ShipControls;
-
-class Projectile {
-private:
-    Vec2 position;
-    Vec2 velocity;
-
-    float speed;
-    int damage;
-
-    int sprite_index;
-
-public:
-    Projectile();
-    Projectile(int sprite_index);
-
-    bool is_off_screen();
-
-    void fire(Vec2 position, float angle);
-
-    void update(uint32_t dt);
-    void draw();
-
-    void set_sprite_index(int index) {
-        sprite_index = index;
-    }
 };
 
 class Ship {
 protected:
     Vec2 position;
     Vec2 velocity;
-    float angle;
+    float angle = 0.0f;
+    float speed = 0.0f;
+    float agility = 0.2f;
+    int health = 100;
+    int sprite_index = 0;
+    int projectile_sprite_idx = 0;
+    int fire_cooldown = 0;
+    const int COOLDOWN_MAX = 250;
 
-    float speed;
-    float agility;
-    int health;
-
-    Projectile projectiles[10];
-
-    int sprite_index;
-
-    uint32_t last_update_time;
-    uint32_t dt;
-
-    int projectile_index;
-    int fire_cooldown;
-
-    void set_projectile_index(int index);
 public:
     virtual ShipControls get_ship_controls() = 0;
-    virtual void move(Vec2 movement_vector);
+    virtual void move(Vec2 movement_vector, uint32_t dt);
     virtual void rotate(float direction);
     virtual void fire();
 
-    virtual void update(uint32_t time);
+    virtual void update(uint32_t dt);
     virtual void draw();
 };

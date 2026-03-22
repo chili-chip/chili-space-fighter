@@ -15,9 +15,7 @@ Player::Player() {
     health = STARTING_HEALTH;
     velocity = Vec2(0, 0);
     sprite_index = STARTING_SHIP_SPRITE_INDEX;
-    projectile_index = 2;
-    last_update_time = 0;
-    this->set_projectile_index(projectile_index);
+    projectile_sprite_idx = 2;
 }
 
 void Player::draw() {
