@@ -21,8 +21,10 @@ protected:
     int health = 100;
     int sprite_index = 0;
     int projectile_sprite_idx = 0;
+    float projectile_speed = 0.3f;
     int fire_cooldown = 0;
-    const int COOLDOWN_MAX = 250;
+    int COOLDOWN_MAX = 250;
+    Faction faction;
 
 public:
     virtual ShipControls get_ship_controls() = 0;
@@ -32,4 +34,12 @@ public:
 
     virtual void update(uint32_t dt);
     virtual void draw();
+
+    virtual Rect get_hitbox() {
+        return Rect(position.x, position.y, 8, 8);
+    }
+    virtual void take_damage(int amount) {
+        health -= amount;
+        if(health <= 0) { /* Handle death */ }
+    }
 };

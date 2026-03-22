@@ -16,6 +16,7 @@ Player::Player() {
     velocity = Vec2(0, 0);
     sprite_index = STARTING_SHIP_SPRITE_INDEX;
     projectile_sprite_idx = 2;
+    faction = Faction::PLAYER;
 }
 
 void Player::draw() {

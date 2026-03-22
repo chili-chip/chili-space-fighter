@@ -20,8 +20,7 @@ void Ship::rotate(float direction) {
 
 void Ship::fire() {
     if (fire_cooldown <= 0) {
-        // Request a projectile from the manager
-        ProjectileManager::get_instance().fire(position, angle, projectile_sprite_idx);
+        ProjectileManager::get_instance().fire(position, projectile_speed, angle, projectile_sprite_idx, faction);
         fire_cooldown = COOLDOWN_MAX;
     }
 }
@@ -40,4 +39,8 @@ void Ship::update(uint32_t dt) {
 void Ship::draw() {
     screen.sprites = ship_spritesheet;
     screen.sprite(sprite_index, position);
+
+    //DEBUG DRAW
+    // screen.pen = Pen(255,0,0);
+    // screen.rectangle(Rect(position.x,position.y, 8, 8));
 }

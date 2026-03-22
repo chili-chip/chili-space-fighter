@@ -5,17 +5,23 @@
 
 using namespace blit;
 
+class Ship; 
+enum Faction { PLAYER, ENEMY };
+
 class Projectile {
 public:
     Vec2 position;
     Vec2 velocity;
-    float speed = 0.3f;
     int sprite_index = 0;
     bool active = false;
+    Faction owner;
 
     void update(uint32_t dt);
     void draw();
     bool is_off_screen();
+    Rect get_hitbox() {
+        return Rect(position.x+1, position.y+4, 8, 1);
+    }
 };
 
 class ProjectileManager {
@@ -33,8 +39,9 @@ public:
     ProjectileManager(const ProjectileManager&) = delete;
     void operator=(const ProjectileManager&) = delete;
 
-    void fire(Vec2 pos, float angle, int sprite_idx);
+    void fire(Vec2 pos, float projectile_speed, float angle, int sprite_idx, Faction faction);
 
     void update(uint32_t dt);
     void draw();
+    void check_collisions(Ship& player, std::vector<Ship*>& enemies);
 };

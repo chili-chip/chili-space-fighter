@@ -6,9 +6,12 @@ Enemy::Enemy(const EnemyPreset& preset) {
     health = preset.health;
     sprite_index = preset.sprite_index;
     projectile_sprite_idx = preset.projectile_index;
+    projectile_speed = 0.2f;
+    COOLDOWN_MAX = 800;
     position = Vec2(64, 10);
     velocity = Vec2(0, 0);
     movement_pattern = preset.movement_pattern;
+    faction = Faction::ENEMY;
 }
 
 ShipControls Enemy::get_ship_controls() {
