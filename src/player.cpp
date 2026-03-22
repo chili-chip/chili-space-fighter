@@ -1,7 +1,6 @@
 #include "player.hpp"
 
 #define STARTING_HEALTH 255
-#define STARTING_SPEED 100
 #define STARTING_AGILITY 0.2f
 #define STARTING_POSITION_X 64
 #define STARTING_POSITION_Y 64
@@ -10,13 +9,19 @@
 
 Player::Player() {
     position = Vec2(STARTING_POSITION_X, STARTING_POSITION_Y);
-    speed = STARTING_SPEED;
     agility = STARTING_AGILITY;
     health = STARTING_HEALTH;
     velocity = Vec2(0, 0);
     sprite_index = STARTING_SHIP_SPRITE_INDEX;
     projectile_sprite_idx = 2;
     faction = Faction::PLAYER;
+}
+
+void Player::move(Vec2 movement_vector, uint32_t dt) {
+    Ship::move(movement_vector, dt);
+    // Screen Bounds
+    position.x = std::clamp(position.x, 0.0f, 119.0f);
+    position.y = std::clamp(position.y, 0.0f, 119.0f);
 }
 
 void Player::draw() {

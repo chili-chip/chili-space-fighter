@@ -7,7 +7,7 @@ std::vector<Ship*> enemies;
 
 void init() {
     set_screen_mode(ScreenMode::hires);
-    enemies.push_back(new Enemy({1.0f, 0.05f, 100, 7, 0, MovementPattern::Circle}));
+    enemies.push_back(new Enemy({0.05f, 20, 7, 0, MovementPattern::Circle}));
 }
 
 void render(uint32_t time) {
@@ -18,6 +18,7 @@ void render(uint32_t time) {
         enemy->draw();
     }
     ProjectileManager::get_instance().draw();
+    EffectManager::get_instance().draw();
 }
 
 void update(uint32_t time) {
@@ -29,4 +30,15 @@ void update(uint32_t time) {
     }
     ProjectileManager::get_instance().update(dt);
     ProjectileManager::get_instance().check_collisions(player, enemies);
+
+    // Erase enemies only when they are dead AND their explosion is done
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+            [](Ship* s) {
+                return !s->is_alive() && !EffectManager::get_instance().is_effect_active_on(s->get_pos_ptr()); 
+            }),
+        enemies.end()
+    );
+
+    EffectManager::get_instance().update(dt);
 }

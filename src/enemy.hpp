@@ -11,7 +11,6 @@ enum class MovementPattern {
 };
 
 struct EnemyPreset {
-    float speed;
     float agility;
     int health;
     int sprite_index;

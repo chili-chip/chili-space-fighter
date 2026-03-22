@@ -15,6 +15,7 @@ public:
     Player();
     //~Player();
 
+    void move(Vec2 movement_vector, uint32_t dt) override;
     void draw() override;
     ShipControls get_ship_controls() override;
 };

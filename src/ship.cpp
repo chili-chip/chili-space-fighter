@@ -8,10 +8,6 @@ void Ship::move(Vec2 movement_vector, uint32_t dt) {
     }
     velocity = movement_vector * agility * dt;
     position += velocity;
-
-    // Screen Bounds
-    position.x = std::clamp(position.x, 0.0f, 119.0f);
-    position.y = std::clamp(position.y, 0.0f, 119.0f);
 }
 
 void Ship::rotate(float direction) {
@@ -43,4 +39,13 @@ void Ship::draw() {
     //DEBUG DRAW
     // screen.pen = Pen(255,0,0);
     // screen.rectangle(Rect(position.x,position.y, 8, 8));
+}
+
+void Ship:: take_damage(int amount) {
+    health -= amount;
+    if (health <= 0) {
+        health = 0;
+        alive = false;
+        EffectManager::get_instance().spawn_explosion(&position, 87, 4, 0.1f);
+    }
 }
