@@ -59,12 +59,13 @@ protected:
     int projectile_index;
     int fire_cooldown;
 
+    void set_projectile_index(int index);
 public:
     virtual ShipControls get_ship_controls() = 0;
-    void move(Vec2 movement_vector);
-    void rotate(float direction);
-    void fire();
+    virtual void move(Vec2 movement_vector);
+    virtual void rotate(float direction);
+    virtual void fire();
 
-    void update(uint32_t time);
-    void draw();
+    virtual void update(uint32_t time);
+    virtual void draw();
 };

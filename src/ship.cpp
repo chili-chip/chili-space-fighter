@@ -100,14 +100,11 @@ void Ship::draw() {
 
     screen.sprites = ship_spritesheet;
     screen.sprite(sprite_index, position);
-    // Apply only to player
-    // if (velocity.x > 0 && position.x < 119) {
-    //     screen.sprite(sprite_index+1, position);
-    // }
-    // else if (velocity.x < 0 && position.x > 0) {
-    //     screen.sprite(sprite_index-1, position);
-    // }
-    // else {
-    //     screen.sprite(sprite_index, position);
-    // }
+}
+
+void Ship::set_projectile_index(int index) {
+    projectile_index = index;
+    for (int i = 0; i < 10; ++i) {
+        projectiles[i].set_sprite_index(projectile_index);
+    }
 }

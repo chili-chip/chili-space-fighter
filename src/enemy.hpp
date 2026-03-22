@@ -2,7 +2,6 @@
 
 #include "32blit.hpp"
 #include "ship.hpp"
-#include "math.h"
 
 enum class MovementPattern {
     StraightDown,

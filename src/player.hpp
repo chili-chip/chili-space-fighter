@@ -14,5 +14,6 @@ public:
     Player();
     //~Player();
 
+    void draw() override;
     ShipControls get_ship_controls() override;
 };

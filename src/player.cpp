@@ -15,7 +15,22 @@ Player::Player() {
     health = STARTING_HEALTH;
     velocity = Vec2(0, 0);
     sprite_index = STARTING_SHIP_SPRITE_INDEX;
+    projectile_index = 2;
     last_update_time = 0;
+    this->set_projectile_index(projectile_index);
+}
+
+void Player::draw() {
+    // Animate ship sprite based on movement direction
+    auto default_sprite_index = sprite_index;
+    if (velocity.x > 0 && position.x < 119) {
+        sprite_index = default_sprite_index + 1;
+    }
+    else if (velocity.x < 0 && position.x > 0) {
+        sprite_index = default_sprite_index - 1;
+    }
+    Ship::draw();
+    sprite_index = default_sprite_index;
 }
 
 ShipControls Player::get_ship_controls() {

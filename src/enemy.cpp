@@ -19,7 +19,7 @@ Enemy::Enemy(const EnemyPreset& preset) {
 ShipControls Enemy::get_ship_controls() {
     ShipControls controls;
     controls.movement_vector = Vec2(0, 0);
-    controls.rotation_direction = M_PI;
+    controls.rotation_direction = 3.14f;
     controls.fire = true;
 
     switch (movement_pattern) {
