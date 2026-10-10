@@ -39,6 +39,9 @@ int final_wave = 0;
 
 constexpr int32_t FADE_MS = 220;
 
+// true only on the update the button went down (blit::pressed() is true for as long as it is held)
+bool just_pressed(uint32_t b) { return buttons.pressed & b; }
+
 void go(State s, int new_cursor = 0) {
     state = s;
     state_time = 0;
@@ -59,8 +62,8 @@ void apply_settings() {
 // Up/down navigation with wrap; returns true when the cursor moved
 bool menu_nav(int count) {
     int old = cursor;
-    if (pressed(Button::DPAD_UP)) cursor = (cursor + count - 1) % count;
-    if (pressed(Button::DPAD_DOWN)) cursor = (cursor + 1) % count;
+    if (just_pressed(Button::DPAD_UP)) cursor = (cursor + count - 1) % count;
+    if (just_pressed(Button::DPAD_DOWN)) cursor = (cursor + 1) % count;
     if (cursor != old) {
         audio::play(audio::Sfx::MenuMove);
         return true;
@@ -120,7 +123,7 @@ void update_title() {
     stars.speed = lerpf(stars.speed, 1.5f, 0.02f);
     if (state_time < 400) return;
     menu_nav(TITLE_COUNT);
-    if (pressed(Button::A)) {
+    if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
         switch (cursor) {
             case 0: start_game(); break;
@@ -175,7 +178,7 @@ void draw_title(uint32_t time) {
 
 void update_options() {
     menu_nav(4);
-    bool left = pressed(Button::DPAD_LEFT), right = pressed(Button::DPAD_RIGHT), a = pressed(Button::A);
+    bool left = just_pressed(Button::DPAD_LEFT), right = just_pressed(Button::DPAD_RIGHT), a = just_pressed(Button::A);
     bool changed = false;
     switch (cursor) {
         case 0:
@@ -201,7 +204,7 @@ void update_options() {
         apply_settings();
         audio::play(audio::Sfx::MenuSelect);
     }
-    if (pressed(Button::B)) {
+    if (just_pressed(Button::B)) {
         store_save();
         audio::play(audio::Sfx::MenuBack);
         go(State::Title, 2);
@@ -248,7 +251,7 @@ void draw_scores(uint32_t time, int highlight) {
 }
 
 void update_back_only(int title_cursor) {
-    if (pressed(Button::A) || pressed(Button::B)) {
+    if (just_pressed(Button::A) || just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title, title_cursor);
     }
@@ -303,7 +306,7 @@ const char *const PAUSE_ITEMS[] = {"RESUME", "QUIT TO TITLE"};
 
 void update_playing(uint32_t dt) {
     world.update(dt);
-    if (world.phase != World::Phase::Over && (pressed(Button::MENU) || pressed(Button::Y))) {
+    if (world.phase != World::Phase::Over && (just_pressed(Button::MENU) || just_pressed(Button::Y))) {
         audio::play(audio::Sfx::Pause);
         go(State::Paused);
         fade_ms = 0;
@@ -323,12 +326,12 @@ void update_playing(uint32_t dt) {
 
 void update_paused() {
     menu_nav(2);
-    if (pressed(Button::MENU) || pressed(Button::Y) || pressed(Button::B) || (pressed(Button::A) && cursor == 0)) {
+    if (just_pressed(Button::MENU) || just_pressed(Button::Y) || just_pressed(Button::B) || (just_pressed(Button::A) && cursor == 0)) {
         audio::play(audio::Sfx::Pause);
         state = State::Playing;
         return;
     }
-    if (pressed(Button::A) && cursor == 1) {
+    if (just_pressed(Button::A) && cursor == 1) {
         audio::play(audio::Sfx::MenuBack);
         ProjectileManager::get_instance().clear();
         fx::clear();
@@ -347,16 +350,16 @@ void draw_paused(uint32_t time) {
 
 void update_name_entry() {
     char &c = entry_name[entry_pos];
-    if (pressed(Button::DPAD_UP)) { c = c >= 'Z' ? 'A' : c + 1; audio::play(audio::Sfx::MenuMove); }
-    if (pressed(Button::DPAD_DOWN)) { c = c <= 'A' ? 'Z' : c - 1; audio::play(audio::Sfx::MenuMove); }
-    if (pressed(Button::DPAD_LEFT) || pressed(Button::B)) {
+    if (just_pressed(Button::DPAD_UP)) { c = c >= 'Z' ? 'A' : c + 1; audio::play(audio::Sfx::MenuMove); }
+    if (just_pressed(Button::DPAD_DOWN)) { c = c <= 'A' ? 'Z' : c - 1; audio::play(audio::Sfx::MenuMove); }
+    if (just_pressed(Button::DPAD_LEFT) || just_pressed(Button::B)) {
         if (entry_pos > 0) { entry_pos--; audio::play(audio::Sfx::MenuBack); }
     }
-    if (pressed(Button::DPAD_RIGHT) || pressed(Button::A)) {
+    if (just_pressed(Button::DPAD_RIGHT) || just_pressed(Button::A)) {
         if (entry_pos < 2) {
             entry_pos++;
             audio::play(audio::Sfx::MenuSelect);
-        } else if (pressed(Button::A)) {
+        } else if (just_pressed(Button::A)) {
             final_rank = submit_score(final_score, (uint16_t)final_wave, entry_name);
             entering_name = false;
             state_time = 0;
@@ -372,10 +375,10 @@ void update_game_over() {
         update_name_entry();
         return;
     }
-    if (pressed(Button::A)) {
+    if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
         start_game();
-    } else if (pressed(Button::B)) {
+    } else if (just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title);
     }
