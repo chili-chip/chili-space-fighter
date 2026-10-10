@@ -3,12 +3,11 @@
 # References can be picked up by including assets.hpp
 
 assets.cpp:
-  assets/no-image.png:
-    name: asset_no_image
   assets/ships.png:
     name: asset_ships
   assets/projectiles.png:
     name: asset_projectiles
   assets/misc.png:
     name: asset_misc
-
+  assets/logo.png:
+    name: asset_logo
