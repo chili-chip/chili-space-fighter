@@ -1,47 +1,44 @@
 #pragma once
-#include "32blit.hpp"
-#include <vector>
-#include "assets.hpp"
 
-using namespace blit;
+#include "common.hpp"
 
-class Ship; 
-enum Faction { PLAYER, ENEMY };
+enum class Faction : uint8_t { PLAYER, ENEMY };
 
-class Projectile {
-public:
+struct Projectile {
     Vec2 position;
-    Vec2 velocity;
-    int sprite_index = 0;
+    Vec2 velocity;       // pixels per ms
+    uint8_t sprite_index = 0;
+    uint8_t damage = 1;
+    float radius = 1.5f;
+    Faction owner = Faction::PLAYER;
     bool active = false;
-    Faction owner;
 
-    void update(uint32_t dt);
-    void draw();
-    bool is_off_screen();
-    Rect get_hitbox() {
-        return Rect(position.x+1, position.y+4, 8, 1);
-    }
+    bool is_off_screen() const;
 };
 
+// Fixed pool of bullets for the player and the enemies.
 class ProjectileManager {
-private:
-    ProjectileManager() {}
-    static const int MAX_PROJECTILES = 100;
+public:
+    static constexpr int MAX_PROJECTILES = 160;
     Projectile pool[MAX_PROJECTILES];
 
-public:
-    static ProjectileManager& get_instance() {
+    static ProjectileManager &get_instance() {
         static ProjectileManager instance;
         return instance;
     }
+    ProjectileManager(const ProjectileManager &) = delete;
+    void operator=(const ProjectileManager &) = delete;
 
-    ProjectileManager(const ProjectileManager&) = delete;
-    void operator=(const ProjectileManager&) = delete;
+    // angle 0 = straight up, positive = clockwise
+    void fire(Vec2 pos, float speed, float angle, int sprite_idx, Faction faction, uint8_t damage = 1, float radius = 1.5f);
+    // fire towards a target point
+    void fire_at(Vec2 pos, Vec2 target, float speed, int sprite_idx, float spread = 0.0f);
 
-    void fire(Vec2 pos, float projectile_speed, float angle, int sprite_idx, Faction faction);
-
+    void clear();
+    void clear_enemy_bullets(bool sparkle);
     void update(uint32_t dt);
     void draw();
-    void check_collisions(Ship& player, std::vector<Ship*>& enemies);
+
+private:
+    ProjectileManager() {}
 };
