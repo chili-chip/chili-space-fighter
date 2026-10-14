@@ -1,6 +1,6 @@
 # Ultra Hyper Space Super Fighters TURBO
 
-![Build](https://github.com/chili-chip/chili-space-fighter/workflows/Build/badge.svg)
+[![Build](https://github.com/chili-chip/chili-space-fighter/actions/workflows/build.yml/badge.svg)](https://github.com/chili-chip/chili-space-fighter/actions/workflows/build.yml)
 
 The galaxy is in danger! The evil aliens are invading and it's up to you to stop them.
 
