@@ -88,3 +88,5 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 
 Game by teriyakigod / [Chili Chip](https://chilichip.eu). Music and sound effects are original and
 released under the same MIT licence as the code.
+
+The project setup comes from the [32blit boilerplate](https://github.com/32blit/32blit-boilerplate), and the game runs on the [32blit SDK](https://github.com/32blit/32blit-sdk) (MIT, © Pimoroni Ltd and the 32blit contributors). Thanks to them.
