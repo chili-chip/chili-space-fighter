@@ -88,3 +88,9 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 
 Game by teriyakigod / [Chili Chip](https://chilichip.eu). Music and sound effects are original and
 released under the same MIT licence as the code.
+
+The sprites in `assets/ships.png`, `characters.png`, `projectiles.png`, `ui.png` and `misc.png`
+come from the [8x8 Space Shooter Asset Pack](https://gvituri.itch.io/space-shooter) by
+Gustavo Vituri. They are not under the MIT licence. The pack allows use and changes in personal
+and commercial games, but not passing the files on as an asset pack, so do not reuse them
+outside this game. The logo, splash and icon are made by `tools/make_art.py`.
