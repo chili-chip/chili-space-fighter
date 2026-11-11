@@ -20,6 +20,7 @@ struct Sheets {
     Surface *projectiles = nullptr;  // 6x10 grid of 8x8 bullets
     Surface *misc = nullptr;         // 13x8 grid: pickups, flames, explosions
     Surface *logo = nullptr;         // title logo
+    Surface *characters = nullptr;   // story portraits: one row per character, 5 frames of 8x8
 };
 extern Sheets sheets;
 

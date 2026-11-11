@@ -1,8 +1,10 @@
 # Script
 
-Every line the game will show. The format is in [the story overview](index.md#script-format): a
-`[NAME FRAME]` line, then what the character says as normal text. The game wraps the text and shows
-it three lines at a time. `[STATIC]` has no face. Lines in `( )` are directions for the game.
+Every line the game shows. The build reads this file, so editing it and building changes the game
+(see [Changing the dialogue](index.md#changing-the-dialogue)). The format is in
+[the story overview](index.md#script-format): a `[NAME FRAME]` line, then what the character says
+as normal text. The game wraps the text and shows it three lines at a time. `[STATIC]` has no face.
+Lines in `( )` are directions.
 
 Names in boxes: `NOVA`, `AUX-7` (becomes `KIT` in chapter 5), `ROOK`, `BRASK`, `LUMO`, `JUNO`,
 `ZIX`, `OSSA`, `DOC`, `WISP`.
@@ -551,7 +553,7 @@ The Lanes will be full of people, Marshal. It will be loud and it will be diffic
 
 ## Ending
 
-Hook: `ending`. After wave 30. Then the game continues in Free Lanes.
+Hook: `ending`. After wave 30. Then THE END and the credits.
 
 ```text
 (the seven gate lights go from red to green, one by one)
@@ -588,7 +590,7 @@ We're going to make it true.
 
 ## Free Lanes
 
-After the ending the game keeps going, as it does today. Hook: `free_lanes`. One box at the start of
+Not played in the game yet: story mode ends after the ending, and endless mode has no story. Hook: `free_lanes`. One box at the start of
 each boss wave from wave 35 on, in this order, then loop. In story terms: loyalists and runaway
 Wardens still roam, and TURBO keeps the Lanes open.
 

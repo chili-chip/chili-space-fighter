@@ -11,3 +11,5 @@ assets.cpp:
     name: asset_misc
   assets/logo.png:
     name: asset_logo
+  assets/characters.png:
+    name: asset_characters

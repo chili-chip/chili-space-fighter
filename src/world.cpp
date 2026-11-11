@@ -6,6 +6,8 @@
 
 namespace {
     constexpr int32_t INTRO_MS = 1800;
+    constexpr int32_t CHAPTER_CARD_MS = 2600;
+    constexpr int32_t GAME_OVER_LINE_MS = 900;  // into the GAME OVER banner, when the game over line shows
     constexpr int32_t BOSS_WARNING_MS = 2800;
     constexpr int32_t CLEARED_MS = 1800;
     constexpr int32_t OVER_MS = 2400;
@@ -40,10 +42,13 @@ namespace {
     }
 }
 
-void World::start(uint8_t ship_color, Starfield *s) {
+void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter) {
     stars = s;
+    mode = m;
     score = 0;
-    wave = 1;
+    wave = mode == Mode::Story ? (start_chapter - 1) * story::WAVES_PER_CHAPTER + 1 : 1;
+    game_over_said = false;
+    dialogue = story::Dialogue();
     combo = 0;
     combo_ms = 0;
     next_life_score = EXTRA_LIFE_EVERY;
@@ -53,9 +58,72 @@ void World::start(uint8_t ship_color, Starfield *s) {
     powerups.clear();
     ProjectileManager::get_instance().clear();
     fx::clear();
-    set_phase(Phase::Intro, INTRO_MS);
-    audio::play_song(audio::Song::Game);
-    audio::play(audio::Sfx::WaveStart);
+    if (mode == Mode::Story && wave == 1) {
+        play(story::intro, After::Card);
+    } else {
+        continue_after(After::Card);
+    }
+}
+
+audio::Song World::stage_song() const {
+    // the two stage themes take turns, five waves (one chapter) each
+    return ((wave - 1) / story::WAVES_PER_CHAPTER) % 2 ? audio::Song::StageB : audio::Song::StageA;
+}
+
+void World::play(const story::Scene &scene, After then) {
+    if (scene.count == 0) {
+        continue_after(then);
+        return;
+    }
+    dialogue.start(scene);
+    after_story = then;
+    set_phase(Phase::Story, 0);
+    // the boss warning keeps its silence; everything else talks over calmer music
+    if (then == After::Complete) {
+        audio::play_song(audio::Song::Ending);
+    } else if (then != After::Boss) {
+        audio::play_song(audio::Song::Story);
+    }
+}
+
+void World::continue_after(After then) {
+    switch (then) {
+        case After::Card:
+            if (!is_boss_wave()) audio::play_song(stage_song());
+            set_phase(Phase::Intro, chapter_first_wave() ? CHAPTER_CARD_MS : INTRO_MS);
+            audio::play(audio::Sfx::WaveStart);
+            break;
+        case After::Wave: begin_wave(); break;
+        case After::Boss: spawn_boss(); break;
+        case After::Ending: play(story::ending, After::Complete); break;
+        case After::NextWave: next_wave(); break;
+        case After::Complete: set_phase(Phase::Complete, 0); break;
+    }
+}
+
+void World::begin_wave() {
+    hit_this_wave = false;
+    if (is_boss_wave()) {
+        set_phase(Phase::BossWarning, BOSS_WARNING_MS);
+        audio::stop_music();
+        audio::play(audio::Sfx::BossWarn);
+    } else {
+        audio::play_song(stage_song());
+        build_wave();
+        set_phase(Phase::Fighting, 0);
+    }
+}
+
+void World::spawn_boss() {
+    boss.spawn(wave / 5);
+    escort_ms = 5000;
+    set_phase(Phase::BossFight, 0);
+    audio::play_song(audio::Song::Boss);
+}
+
+void World::next_wave() {
+    wave++;
+    continue_after(After::Card);
 }
 
 void World::set_phase(Phase p, int32_t ms) {
@@ -281,25 +349,31 @@ void World::update(uint32_t dt) {
         case Phase::Intro:
             stars->speed = lerpf(stars->speed, 1.0f, 0.02f);
             if (phase_ms <= 0) {
-                hit_this_wave = false;
-                if (is_boss_wave()) {
-                    set_phase(Phase::BossWarning, BOSS_WARNING_MS);
-                    audio::stop_music();
-                    audio::play(audio::Sfx::BossWarn);
+                int ch = chapter();
+                int nth = (wave - 1) % story::WAVES_PER_CHAPTER;  // 0 = first wave of the chapter
+                if (ch > 1 && nth == 0) {
+                    play(story::chapters[ch - 1].start, After::Wave);  // chapter 1 had the intro instead
+                } else if (ch > 0 && nth == 2) {
+                    play(story::chapters[ch - 1].radio, After::Wave);
                 } else {
-                    build_wave();
-                    set_phase(Phase::Fighting, 0);
+                    begin_wave();
                 }
             }
             break;
 
         case Phase::BossWarning:
             if (phase_ms <= 0) {
-                boss.spawn(wave / 5);
-                escort_ms = 5000;
-                set_phase(Phase::BossFight, 0);
-                audio::play_song(audio::Song::Boss);
+                if (chapter() > 0) {
+                    play(story::chapters[chapter() - 1].boss_warning, After::Boss);
+                } else {
+                    spawn_boss();
+                }
             }
+            break;
+
+        case Phase::Story:
+            dialogue.update(dt);
+            if (!dialogue.active()) continue_after(after_story);
             break;
 
         case Phase::Fighting: {
@@ -347,25 +421,37 @@ void World::update(uint32_t dt) {
                 perfect_bonus = !hit_this_wave;
                 if (perfect_bonus) add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
                 set_phase(Phase::Cleared, CLEARED_MS + 1200);
-                audio::play_song(audio::Song::Game);
+                audio::play_song(stage_song());
             }
             break;
 
         case Phase::Cleared:
             if (phase_ms < 600) stars->speed = lerpf(stars->speed, 4.0f, 0.05f);
             if (phase_ms <= 0) {
-                wave++;
-                set_phase(Phase::Intro, INTRO_MS);
-                audio::play(audio::Sfx::WaveStart);
+                int ch = chapter();
+                if (is_boss_wave() && ch > 0) {
+                    play(story::chapters[ch - 1].after_boss, ch == story::CHAPTERS ? After::Ending : After::NextWave);
+                } else {
+                    next_wave();
+                }
             }
             break;
 
+        case Phase::Complete:
+            break;
+
         case Phase::Over:
+            if (!game_over_said && OVER_MS - phase_ms > GAME_OVER_LINE_MS) {
+                game_over_said = true;
+                int ch = chapter();
+                if (ch > 0) dialogue.start(story::chapters[ch - 1].game_over);
+            }
+            dialogue.update(dt);
             break;
     }
 
     Vec2 target = player.alive ? player.position : Vec2(SCREEN_W / 2, SCREEN_H);
-    player.update(dt);
+    if (phase != Phase::Story) player.update(dt);  // A turns the page, it doesn't fire
     for (auto &e : enemies) e.update(dt, target, player.alive);
     boss.update(dt, target, player.alive);
     powerups.update(dt);
@@ -382,6 +468,7 @@ void World::draw(uint32_t time) {
     fx::draw();
     draw_banner(time);
     draw_hud(time);
+    dialogue.draw(time);
 }
 
 void World::draw_hud(uint32_t time) {
@@ -471,6 +558,17 @@ void World::draw_banner(uint32_t time) {
 
     switch (phase) {
         case Phase::Intro: {
+            if (chapter_first_wave()) {
+                // chapter card: fade in, hold, fade out
+                int32_t elapsed = CHAPTER_CARD_MS - phase_ms;
+                uint8_t a = (uint8_t)(255 * clampf(std::min(elapsed, phase_ms) / 300.0f, 0, 1));
+                const char *const *card = story::chapters[chapter() - 1].card;
+                band(44, 36, Pen(0, 0, 0, (uint8_t)(a * 160 / 255)));
+                shadow_text(card[0], minimal_font, Point(SCREEN_W / 2, 48), Pen(140, 160, 255, a), TextAlign::top_center);
+                shadow_text(card[1], outline_font, Point(SCREEN_W / 2, 57), rainbow(time * 0.004f), TextAlign::top_center);
+                shadow_text(card[2], minimal_font, Point(SCREEN_W / 2, 69), Pen(200, 200, 230, a), TextAlign::top_center);
+                break;
+            }
             // slide in, hold, slide out
             int32_t elapsed = INTRO_MS - phase_ms;
             float in = clampf(elapsed / 250.0f, 0, 1);

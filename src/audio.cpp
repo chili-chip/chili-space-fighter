@@ -20,7 +20,8 @@ struct ParsedSong {
     std::vector<uint8_t> events[MUSIC_CHANNELS];
 };
 
-ParsedSong songs[3];  // Title, Game, Boss
+const SongData *const SONGS[] = {&SONG_TITLE, &SONG_STAGE_A, &SONG_STAGE_B, &SONG_BOSS, &SONG_STORY, &SONG_ENDING};
+ParsedSong playing;  // only the current song is parsed, to keep RAM free
 Song current = Song::None;
 uint32_t step_acc = 0;
 size_t step_pos[MUSIC_CHANNELS];
@@ -108,7 +109,7 @@ void play_drum(uint8_t kind) {
 }
 
 void music_step() {
-    ParsedSong &song = songs[(int)current - 1];
+    ParsedSong &song = playing;
     for (int c = 0; c < MUSIC_CHANNELS; c++) {
         auto &ev = song.events[c];
         if (ev.empty()) continue;
@@ -135,8 +136,15 @@ void start_song(Song song) {
     step_acc = 0;
     for (auto &p : step_pos) p = 0;
     silence_music();
+    for (auto &ev : playing.events) ev = std::vector<uint8_t>();
+    playing.data = nullptr;
     if (song == Song::None || !music_on) return;
-    setup_instruments(songs[(int)song - 1].data);
+    playing.data = SONGS[(int)song - 1];
+    playing.events[CH_LEAD] = parse_track(playing.data->lead);
+    playing.events[CH_BASS] = parse_track(playing.data->bass);
+    playing.events[CH_ARP] = parse_track(playing.data->arp);
+    playing.events[CH_DRUMS] = parse_track(playing.data->drums);
+    setup_instruments(playing.data);
     music_step();
 }
 
@@ -223,22 +231,13 @@ void start_step(int channel, Voice &v) {
 }  // namespace
 
 void init() {
-    songs[0].data = &SONG_TITLE;
-    songs[1].data = &SONG_GAME;
-    songs[2].data = &SONG_BOSS;
-    for (auto &s : songs) {
-        s.events[CH_LEAD] = parse_track(s.data->lead);
-        s.events[CH_BASS] = parse_track(s.data->bass);
-        s.events[CH_ARP] = parse_track(s.data->arp);
-        s.events[CH_DRUMS] = parse_track(s.data->drums);
-    }
     for (int c = 0; c < CHANNEL_COUNT; c++) channels[c].off();
 }
 
 void update(uint32_t dt) {
     // music sequencer
-    if (current != Song::None && music_on) {
-        uint32_t step_ms = songs[(int)current - 1].data->step_ms;
+    if (playing.data) {
+        uint32_t step_ms = playing.data->step_ms;
         step_acc += dt;
         while (step_acc >= step_ms) {
             step_acc -= step_ms;
@@ -285,6 +284,22 @@ void play(Sfx sfx) {
     v.def = def;
     v.step = 0;
     start_step(channel, v);
+}
+
+void talk(int voice) {
+    if (!sound_on) return;
+    // channel 4 is the shot channel, and the ship never fires while someone is talking
+    Voice &v = voices[0];
+    v.def = nullptr;
+    AudioChannel &ch = channels[SFX_FIRST];
+    static const uint16_t PITCH[] = {180, 1400, 260, 620, 520, 1100, 150, 700, 480, 340, 900};
+    uint16_t base = PITCH[(voice >= 0 && voice < 11) ? voice : 10];
+    ch.waveforms = voice == 10 ? Waveform::NOISE : Waveform::SQUARE;
+    ch.frequency = base + (uint16_t)(blit::random() % (base / 4 + 1));
+    ch.pulse_width = 0x4000;
+    ch.volume = 0x1200;
+    ch.attack_ms = 1; ch.decay_ms = 30; ch.sustain = 0; ch.release_ms = 10;
+    ch.trigger_attack();
 }
 
 void play_song(Song song) {
