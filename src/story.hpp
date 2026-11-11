@@ -41,7 +41,8 @@ std::vector<std::vector<std::string>> paginate(const std::string &text, int widt
 
 // Plays a scene in a text box along the bottom of the screen. The text appears letter by letter while
 // the face talks and blips; A shows the whole page, then the next one. B skips the scene.
-// When someone new comes on comms, and when the scene ends, the box crackles with static.
+// When someone new comes on comms, and when the scene ends, the face is static and the name arrives
+// (or leaves) as scrambled letters.
 class Dialogue {
 public:
     void start(const Scene &scene);
@@ -68,7 +69,7 @@ private:
     int page_chars() const;
     bool talking() const { return revealed < page_chars(); }
     void draw_card(uint32_t time);
-    void draw_static();
+    void draw_static(const Rect &face);
 };
 
 }  // namespace story

@@ -9,7 +9,7 @@ namespace {
     constexpr uint32_t INPUT_DELAY_MS = 250;  // so a player still mashing fire doesn't skip a page unread
     constexpr uint32_t CHAR_MS = 28;          // text speed
     constexpr uint32_t MOUTH_MS = 110;        // talking animation speed
-    constexpr int32_t STATIC_MS = 260;        // comms crackle when someone joins or the scene ends
+    constexpr int32_t STATIC_MS = 420;        // comms crackle when someone joins or the scene ends
 
     // the frame each character's face opens its mouth with (see docs/story/characters.md)
     int talk_frame(int row, int frame) {
@@ -222,11 +222,6 @@ void Dialogue::draw(uint32_t time) {
     screen.rectangle(Rect(0, BOX_Y, SCREEN_W, SCREEN_H - BOX_Y));
     screen.pen = Pen(90, 80, 200);
     screen.h_span(Point(0, BOX_Y), SCREEN_W);
-    if (static_ms > 0) {
-        draw_static();
-        return;
-    }
-
     // face, drawn at 2x; it talks while the text appears. The Static's frame flickers through its five frames.
     int frame = sp.frame;
     bool mouth_open = talking() && (shown_ms / MOUTH_MS) % 2;
@@ -237,10 +232,27 @@ void Dialogue::draw(uint32_t time) {
     screen.rectangle(Rect(face.x - 1, face.y - 1, face.w + 2, face.h + 2));
     screen.pen = Pen(20, 16, 50);
     screen.rectangle(face);
-    screen.stretch_blit(sheets.characters, Rect(1 + frame * 8, sp.row * 8, 8, 8), face);
+    if (static_ms > 0) draw_static(face);
+    else screen.stretch_blit(sheets.characters, Rect(1 + frame * 8, sp.row * 8, 8, 8), face);
 
     int y = BOX_Y + 3;
-    if (sp.name) shadow_text(sp.name, minimal_font, Point(TEXT_X, y), Pen(255, 210, 90));
+    if (sp.name) {
+        // while the comms crackle the name arrives as scrambled data, settling letter by letter
+        // (and falls apart the same way when the last speaker signs off)
+        std::string name = sp.name;
+        if (static_ms > 0) {
+            static const char GLYPHS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&?";
+            int len = (int)name.size();
+            int settled = len - (len + 1) * static_ms / STATIC_MS;
+            if (closing) settled = len - 1 - settled;
+            uint32_t seed = static_ms / 40;  // new noise every 40 ms
+            for (int i = std::max(settled, 0); i < len; i++) {
+                seed = seed * 1103515245u + 12345u + i;
+                name[i] = GLYPHS[(seed >> 16) % (sizeof(GLYPHS) - 1)];
+            }
+        }
+        shadow_text(name, minimal_font, Point(TEXT_X, y), static_ms > 0 ? Pen(160, 200, 255) : Pen(255, 210, 90));
+    }
     y += LINE_H + 1;
     int left = revealed;
     for (auto &line : pages[page]) {
@@ -252,7 +264,7 @@ void Dialogue::draw(uint32_t time) {
     }
 
     // a small arrow next to the name, bobbing, when A goes on
-    if (!talking() && done_ms >= INPUT_DELAY_MS) {
+    if (!talking() && !closing && done_ms >= INPUT_DELAY_MS) {
         Point a(SCREEN_W - 6, BOX_Y + 4 + (int)((time / 250) % 2));
         screen.pen = Pen(255, 230, 120);
         screen.h_span(a + Point(-2, 0), 5);
@@ -261,20 +273,14 @@ void Dialogue::draw(uint32_t time) {
     }
 }
 
-void Dialogue::draw_static() {
-    // snow in the box, and a few torn lines across the whole screen
-    for (int y = BOX_Y + 1; y < SCREEN_H; y++) {
-        for (int x = 0; x < SCREEN_W; x += 2) {
-            uint32_t r = blit::random();
-            uint8_t v = 40 + (r & 0xbf);
-            screen.pen = Pen(v, v, v + (255 - v) / 4, (r >> 8) & 1 ? 255 : 120);
-            screen.h_span(Point(x, y), 2);
+void Dialogue::draw_static(const Rect &face) {
+    // snow in the avatar box
+    for (int y = 0; y < face.h; y += 2) {
+        for (int x = 0; x < face.w; x += 2) {
+            uint8_t v = 30 + (blit::random() & 0xdf);
+            screen.pen = Pen(v, v, std::min(255, v + 30));
+            screen.rectangle(Rect(face.x + x, face.y + y, 2, 2));
         }
-    }
-    for (int i = 0; i < 4; i++) {
-        uint32_t r = blit::random();
-        screen.pen = Pen(200, 200, 230, 60 + (r & 63));
-        screen.h_span(Point(0, (r >> 8) % BOX_Y), SCREEN_W);
     }
 }
 

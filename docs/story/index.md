@@ -159,7 +159,7 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
 | ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The text appears letter by letter while the face talks (it switches to its talking frame and bobs) and a voice blips. The arrow means A goes on. |
 | ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
 | ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
-| ![Comms static](img/game-static.png) | **Comms static.** When someone new starts talking, and when the last speaker signs off, the box fills with snow and torn lines cross the screen for a quarter of a second, with a crackle. |
+| ![Comms static](img/game-static.png) | **Comms static.** When someone new starts talking, and when the last speaker signs off, the avatar box shows snow and the name scrambles in (or out) letter by letter for 0.4 s, with a crackle. |
 | ![Juno on the wing](img/game-wingman.png) | **Autopilot and Juno.** While a scene is open the ship flies itself to the middle, above the box. In chapter 2 Juno's Sunset flies on its wing, in scenes and in the fight. |
 | ![A beam](img/game-beam.png) | **Beam attack.** The Tollgate, Paragon, Prism and Bulwark fire beams; the Bulwark fires one from each hull. A thin flickering line warns first. |
 | ![Game over line](img/game-game-over.png) | **Game over line.** Shown under GAME OVER. A or B goes on to the score screen. |
@@ -187,8 +187,9 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
   does not fire. In chapter 2 Juno's Sunset flies next to it. MENU still pauses.
 - A page ends at the end of a sentence. When a sentence is too long for one page, it is split after
   a comma; only a part with no comma that is still too long is split between words.
-- When someone new starts talking, and when the last speaker signs off, the box fills with static
-  for a quarter of a second with a crackle of noise, like a radio tuning in.
+- When someone new starts talking, the avatar box shows static for 0.4 s with a crackle of noise,
+  and the name arrives as scrambled letters that settle one by one, like data coming in. When the
+  last speaker signs off, the same plays backwards. The static stays inside the avatar box.
 - A game over in story mode restarts the chapter from its card. Story scores do not go in the
   high score table.
 
