@@ -1,8 +1,10 @@
 # Script
 
-Every line the game will show. The format is in [the story overview](index.md#script-format): a
-`[NAME FRAME]` line, then what the character says as normal text. The game wraps the text and shows
-it three lines at a time. `[STATIC]` has no face. Lines in `( )` are directions for the game.
+Every line the game shows. The build reads this file, so editing it and building changes the game
+(see [Changing the dialogue](index.md#changing-the-dialogue)). The format is in
+[the story overview](index.md#script-format): a `[NAME FRAME]` line, then what the character says
+as normal text. The game wraps the text and shows it three lines at a time. `[STATIC]` has no face.
+Lines in `( )` are directions.
 
 Names in boxes: `NOVA`, `AUX-7` (becomes `KIT` in chapter 5), `ROOK`, `BRASK`, `LUMO`, `JUNO`,
 `ZIX`, `OSSA`, `DOC`, `WISP`.

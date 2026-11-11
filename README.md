@@ -10,6 +10,7 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 
 ## Features
 
+- A story told between waves: six chapters with a boss each, a cast of ten, then endless Free Lanes
 - Endless numbered waves built from enemy formations: dives, zig-zags, swoops, loops, side sweeps
   and squadrons that hover in formation before diving at you
 - Five enemy types with their own fire patterns, getting faster and tougher every wave
@@ -22,9 +23,15 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 
 ## Story
 
-The story, lore and world are written up in [docs/story](docs/story/index.md): the world of
-Halcyon, the cast from `assets/characters.png`, the ships, and the full script by chapter. They are
-not in the game yet.
+The game tells the story **Open Sky** in scenes between waves: six chapters of five waves each,
+then the endless Free Lanes. A shows the next page of a speech and B skips a scene.
+
+The world, the cast from `assets/characters.png`, the ships and the full script are in
+[docs/story](docs/story/index.md). The dialogue lives only in
+[docs/story/script.md](docs/story/script.md); the build turns it into code, so to change a line,
+edit the script and build. See [Changing the dialogue](docs/story/index.md#changing-the-dialogue).
+
+![Dialogue box](docs/story/img/game-dialogue.png)
 
 ## Controls
 
@@ -34,6 +41,7 @@ not in the game yet.
 | A (hold) | Fire |
 | MENU | Pause |
 | A / B | Confirm / back in menus |
+| A / B in a story scene | Next page / skip the scene |
 
 On desktop the keyboard maps to: arrows or WASD for the D-pad, `Z` for A, `X` for B and `Esc` or `2` for MENU.
 
@@ -79,7 +87,8 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 | File | What it does |
 | --- | --- |
 | `src/game.cpp` | 32blit entry points, title screen, menus, pause, game over and name entry |
-| `src/world.cpp` | One run: wave schedule, collisions, scoring, HUD and banners |
+| `src/world.cpp` | One run: wave schedule, collisions, scoring, HUD, banners and when story scenes play |
+| `src/story.cpp` | Story text box: wrapping, pages, portraits and title cards |
 | `src/player.cpp` | Player ship, weapons, hull, shield and respawn |
 | `src/enemy.cpp` | Enemy types, movement patterns and the boss |
 | `src/powerup.cpp` | Power-up drops |
@@ -89,6 +98,7 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 | `src/audio.cpp`, `src/songs.cpp` | Sequencer, sound effects and the soundtrack |
 | `src/save.cpp` | Settings and high scores |
 | `tools/make_art.py` | Regenerates the TURBO logo, launcher splash and icon |
+| `tools/make_script.py` | Turns `docs/story/script.md` into `story_script.cpp` at build time |
 
 ## Credits
 

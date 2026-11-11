@@ -27,6 +27,18 @@ else()
 endif()
 
 blit_assets_yaml (${PROJECT_NAME} assets.yml)
+
+# The story dialogue lives in docs/story/script.md and is turned into C++ on every build
+set(STORY_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/docs/story/script.md)
+set(STORY_CPP ${CMAKE_CURRENT_BINARY_DIR}/story_script.cpp)
+add_custom_command(
+  OUTPUT ${STORY_CPP}
+  COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/make_script.py ${STORY_SCRIPT} ${STORY_CPP}
+  DEPENDS ${STORY_SCRIPT} ${CMAKE_CURRENT_SOURCE_DIR}/tools/make_script.py
+  VERBATIM
+)
+target_sources (${PROJECT_NAME} PRIVATE ${STORY_CPP})
+target_include_directories (${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 blit_metadata (${PROJECT_NAME} metadata.yml)
 add_custom_target (flash DEPENDS ${PROJECT_NAME}.flash)
 

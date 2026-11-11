@@ -1,7 +1,8 @@
 # Story: Open Sky
 
-This is the story, lore and world of **Ultra Hyper Space Super Fighters TURBO**. It is written to be
-added to the game later. Nothing here is in the game yet.
+This is the story, lore and world of **Ultra Hyper Space Super Fighters TURBO**. The game plays the
+[script](script.md) between waves; see [In the game](#in-the-game) for how it looks and how to
+change it.
 
 | Page | What is in it |
 | --- | --- |
@@ -119,8 +120,8 @@ The console screen is 128 by 128 pixels. Dialogue uses a box along the bottom of
 
 ### Script format
 
-Every speech in [script.md](script.md) looks like this, so a small tool can turn it into C++ arrays
-later:
+Every speech in [script.md](script.md) looks like this. The build reads this file directly (see
+[Changing the dialogue](#changing-the-dialogue)):
 
 ```text
 [ROOK 1]
@@ -129,7 +130,9 @@ And that's our cue. Smile for the camera, rookie. There are ten million screens 
 
 The first line is the speaker and the portrait frame (0 to 4, see [Characters](characters.md)).
 The second line is the whole speech on one line. `[STATIC]` means no face: draw the static frame
-(row 10 of the sheet). Lines in `( )` are stage directions for the game, not text.
+(row 10 of the sheet). Lines in `( )` are stage directions, not text. The game acts on one of them,
+`(title card: A / B / C. D)`, which shows a full screen card with one line per part. A `( )` at the
+start of a speech, like Wisp's `(the light says)`, is left out of the box.
 
 On the console that speech becomes two pages:
 
@@ -145,8 +148,74 @@ On the console that speech becomes two pages:
 The script has 120 speeches and 272 pages in total. Every speech was checked against the real
 `minimal_font` character widths.
 
+## In the game
+
+| | |
+| --- | --- |
+| ![Title card](img/game-title-card.png) | **Title card.** The intro opens as the show. `(title card: ...)` in the script; `TURBO` is drawn as the logo. |
+| ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The arrow means A shows more. |
+| ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
+| ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
+| ![Game over line](img/game-game-over.png) | **Game over line.** Shown under GAME OVER. A or B goes on to the score screen. |
+
+### When scenes play
+
+| Hook | In the game |
+| --- | --- |
+| `intro` | After PLAY. Then the chapter 1 card. |
+| `chapter_card` | First wave of chapters 1 to 6, for 2.6 seconds. |
+| `chapter_start` | After the card, before the first enemies (chapters 2 to 6). |
+| `radio` | Third wave of a chapter, after "WAVE N", before the enemies. |
+| `boss_warning` | After "WARNING / BOSS APPROACHING", before the boss flies in. |
+| `after_boss` | After "WAVE CLEAR!" on a boss wave, before the next wave. |
+| `ending` | After the chapter 6 `after_boss`. Then wave 31 and the Free Lanes. |
+| `free_lanes` | Before the boss warning on waves 35, 40, 45 and on, one speech each, then loop. |
+| `game_over` | Under the GAME OVER banner. Chapter 6 has none, so nothing shows there. |
+
+- **A** shows the next page. **B** skips the whole scene. Input waits a quarter second on each new
+  page, so a player still holding or mashing fire does not skip it unread.
+- The ship does not move or fire while a scene is open. MENU still pauses.
+- Every run tells the story from the start. Score, combos and the high score table are unchanged.
+
+### Changing the dialogue
+
+Edit [script.md](script.md) and build. `tools/make_script.py` turns it into C++ (`story_script.cpp`
+in the build folder) on every build where the script changed. Nothing else needs to change.
+
+```mermaid
+flowchart LR
+    S[docs/story/script.md] -->|tools/make_script.py| C[build/story_script.cpp]
+    C --> G[game]
+    H[src/story.cpp: text box] --> G
+    W[src/world.cpp: when scenes play] --> G
+```
+
+What the tool reads:
+
+| In script.md | Becomes |
+| --- | --- |
+| `## Intro`, `## Ending` | the intro and ending scenes |
+| `## Chapter N: ...` with `### Chapter card` | the card (first `text` block, 3 lines) and `chapter_start` (second block) |
+| `### Radio`, `### Boss warning`, `### After the boss`, `### Game over` | that chapter's scene |
+| `## Free Lanes` | one speech per Free Lanes boss wave; `### Game over in Free Lanes` is its game over line |
+| `[NAME FRAME]` | a speech. Names: `NOVA`, `AUX-7`, `KIT`, `ROOK`, `BRASK`, `LUMO`, `JUNO`, `ZIX`, `OSSA`, `DOC`, `WISP` |
+
+Prose outside the `text` blocks is for people and is ignored. Any scene can be left out; the game
+skips it. The build stops with the line number when a speaker is unknown, a frame is not 0 to 4, a
+speech has no text, or a character is not in the console font (plain ASCII only: write `...` and
+`'`, not `…` and `’`). To check the script without building the game:
+
+```
+python3 tools/make_script.py docs/story/script.md /tmp/story_script.cpp
+```
+
+The game wraps each speech itself, so a speech can be any length; keep to 3 pages so the
+conversation keeps moving.
+
 ## Not in this story
 
 - No new mechanics, weapons or enemies. Everything uses the existing sprites.
+- Stage directions like "(Juno takes the Sunset fighter)" are not acted out. The ship is still
+  the one picked in Options.
 - No branching or saves for story progress. A run is one telling of the story.
 - No real-world groups, flags or slogans. The themes stay in a made-up world on purpose.

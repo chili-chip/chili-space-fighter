@@ -448,6 +448,7 @@ void init() {
     sheets.projectiles = Surface::load(asset_projectiles);
     sheets.misc = Surface::load(asset_misc);
     sheets.logo = Surface::load(asset_logo);
+    sheets.characters = Surface::load(asset_characters);
 
     load_save();
     audio::init();
