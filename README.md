@@ -20,6 +20,12 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 - Original chiptune soundtrack (title, in-game and boss themes) and synthesised sound effects
 - Five ship colours to pick from in Options; music and sound can be switched off separately
 
+## Story
+
+The story, lore and world are written up in [docs/story](docs/story/index.md): the world of
+Halcyon, the cast from `assets/characters.png`, the ships, and the full script by chapter. They are
+not in the game yet.
+
 ## Controls
 
 | Button | Action |
