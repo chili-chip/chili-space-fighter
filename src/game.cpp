@@ -43,6 +43,7 @@ constexpr int32_t FADE_MS = 220;
 bool just_pressed(uint32_t b) { return buttons.pressed & b; }
 
 void go(State s, int new_cursor = 0) {
+    if (s == State::Title) stars.set_theme(0);
     state = s;
     state_time = 0;
     cursor = new_cursor;

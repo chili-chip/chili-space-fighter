@@ -9,14 +9,15 @@
 #include "audio.hpp"
 
 // One run of the game: waves, enemies, the boss, scoring, the in-game HUD and the story scenes
-// between waves (chapter 1 is waves 1 to 5, and so on; after chapter 6 come the endless Free Lanes).
+// between waves (chapter 1 is waves 1 to 10, and so on; every tenth wave is a boss).
 class World {
 public:
     enum class Phase { Intro, Fighting, BossWarning, BossFight, Cleared, Story, Over, Complete };
-    // Story: chapters 1 to 6 with scenes between waves, ending after wave 30. Endless: waves forever, high scores.
+    // Story: chapters 1 to 6 with scenes between waves, ending after wave 60. Endless: waves forever, high scores.
     enum class Mode { Story, Endless };
 
     Player player;
+    Wingman wingman;  // Juno, in chapter 2
     Boss boss;
     PowerUpManager powerups;
 
@@ -32,7 +33,7 @@ public:
 
     bool is_over() const { return phase == Phase::Over && phase_ms <= 0 && !dialogue.active(); }
     bool is_complete() const { return phase == Phase::Complete; }
-    bool is_boss_wave() const { return wave % 5 == 0; }
+    bool is_boss_wave() const { return wave % story::WAVES_PER_CHAPTER == 0; }
     // 1 to 6 in story mode, 0 in endless mode
     int chapter() const { return mode == Mode::Story ? std::min((wave - 1) / story::WAVES_PER_CHAPTER + 1, story::CHAPTERS) : 0; }
 

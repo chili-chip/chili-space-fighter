@@ -53,6 +53,7 @@ void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter) {
     combo_ms = 0;
     next_life_score = EXTRA_LIFE_EVERY;
     player.reset(ship_color);
+    wingman.active = false;
     boss.active = false;
     for (auto &e : enemies) e.active = false;
     powerups.clear();
@@ -66,7 +67,7 @@ void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter) {
 }
 
 audio::Song World::stage_song() const {
-    // the two stage themes take turns, five waves (one chapter) each
+    // the two stage themes take turns, one chapter each
     return ((wave - 1) / story::WAVES_PER_CHAPTER) % 2 ? audio::Song::StageB : audio::Song::StageA;
 }
 
@@ -89,6 +90,7 @@ void World::play(const story::Scene &scene, After then) {
 void World::continue_after(After then) {
     switch (then) {
         case After::Card:
+            stars->set_theme(chapter());
             if (!is_boss_wave()) audio::play_song(stage_song());
             set_phase(Phase::Intro, chapter_first_wave() ? CHAPTER_CARD_MS : INTRO_MS);
             audio::play(audio::Sfx::WaveStart);
@@ -115,7 +117,7 @@ void World::begin_wave() {
 }
 
 void World::spawn_boss() {
-    boss.spawn(wave / 5);
+    boss.spawn(wave / story::WAVES_PER_CHAPTER);
     escort_ms = 5000;
     set_phase(Phase::BossFight, 0);
     audio::play_song(audio::Song::Boss);
@@ -134,7 +136,7 @@ void World::set_phase(Phase p, int32_t ms) {
 void World::spawn_enemy(EnemyKind kind, MovementPattern pattern, Vec2 origin, float dir) {
     float speed = std::min(1.0f + 0.05f * (wave - 1), 1.8f);
     float fire_rate = std::min(1.0f + 0.08f * (wave - 1), 2.5f);
-    int bonus_hp = (wave - 1) / 6;
+    int bonus_hp = std::min((wave - 1) / 8, 5);
     for (auto &e : enemies) {
         if (e.active) continue;
         e.spawn(kind, pattern, origin, dir, speed, fire_rate, bonus_hp);
@@ -327,6 +329,10 @@ void World::handle_collisions() {
         player_hit();
         if (!player.alive) return;
     }
+    if (player.can_be_hit() && boss.beam_hits(ph)) {
+        player_hit();
+        if (!player.alive) return;
+    }
     if (boss.active && !boss.dying && player.can_be_hit() && boss.get_hitbox().intersects(ph)) {
         player_hit();
         if (!player.alive) return;
@@ -353,7 +359,7 @@ void World::update(uint32_t dt) {
                 int nth = (wave - 1) % story::WAVES_PER_CHAPTER;  // 0 = first wave of the chapter
                 if (ch > 1 && nth == 0) {
                     play(story::chapters[ch - 1].start, After::Wave);  // chapter 1 had the intro instead
-                } else if (ch > 0 && nth == 2) {
+                } else if (ch > 0 && nth == story::RADIO_WAVE - 1) {
                     play(story::chapters[ch - 1].radio, After::Wave);
                 } else {
                     begin_wave();
@@ -450,8 +456,17 @@ void World::update(uint32_t dt) {
             break;
     }
 
+    // Juno flies on the player's wing through chapter 2
+    if (chapter() == 2 && !wingman.active) wingman.join();
+    if (chapter() != 2 && wingman.active) wingman.leave();
+
+    // while someone talks, the ship flies itself to the middle, clear of the text box (A turns the page, it doesn't fire)
+    player.autopilot = phase == Phase::Story;
+    player.autopilot_to = Vec2(SCREEN_W / 2 - (wingman.active ? 7 : 0), SCREEN_H / 2);
+
     Vec2 target = player.alive ? player.position : Vec2(SCREEN_W / 2, SCREEN_H);
-    if (phase != Phase::Story) player.update(dt);  // A turns the page, it doesn't fire
+    player.update(dt);
+    wingman.update(dt, player);
     for (auto &e : enemies) e.update(dt, target, player.alive);
     boss.update(dt, target, player.alive);
     powerups.update(dt);
@@ -462,7 +477,8 @@ void World::update(uint32_t dt) {
 void World::draw(uint32_t time) {
     powerups.draw(time);
     for (auto &e : enemies) e.draw();
-    boss.draw();
+    boss.draw(time);
+    wingman.draw(time);
     player.draw(time);
     ProjectileManager::get_instance().draw();
     fx::draw();

@@ -12,7 +12,7 @@ chosen one when leaving Halo, and the others end up with the Static.
 | Ship | Frames | Index (centre) | Story |
 | --- | --- | --- | --- |
 | **Silver** | ![Silver](img/ship-silver.png) | 1 | The rookie's ship, Nova's by default. Plain, reliable, the show's "everyone" fighter. |
-| **Sunset** | ![Sunset](img/ship-sunset.png) | 11 | Grounded after its pilot quit the show. Juno takes it in chapter 2 and finally retires the old skiff. |
+| **Sunset** | ![Sunset](img/ship-sunset.png) | 11 | Its pilot quit the show and sold it for scrap. Juno flies it, and in chapter 2 it flies on Nova's wing (it can't be hit and fires when you fire). |
 | **Viper** | ![Viper](img/ship-viper.png) | 21 | Taken from a Yards test bay in chapter 3. Zix rebuilds it and flies it badly but happily. |
 | **Nebula** | ![Nebula](img/ship-nebula.png) | 31 | Was a show prop, never flown. Ossa takes it in chapter 4: "It is the ugliest thing I have ever seen, and I love it." |
 | **Crimson** | ![Crimson](img/ship-crimson.png) | 41 | Rook's ship. Grounded after chapter 4. Rook flies it again in chapter 6, on the other side. |
@@ -38,8 +38,21 @@ Things to keep true when the story goes in:
 
 ## Bosses
 
-Each boss is a 16 by 16 sprite. The game shows them in this order and loops after six. In the story
-each one is a tool of control, and each fall frees something.
+Each boss is a 16 by 16 sprite. The game shows them in this order, one every tenth wave, and loops after six. In the story
+each one is a tool of control, and each fall frees something. Each boss has its own attacks:
+
+| Boss | Attacks, in order |
+| --- | --- |
+| The Herald | fan, aimed burst |
+| The Tollgate | fan, scanner beam, aimed burst |
+| The Cradle | egg rain, ring, egg rain, aimed burst |
+| The Paragon | aimed burst, beam, fan |
+| The Prism | spiral, ring, spiral, beam |
+| The Bulwark | twin beam (one from each hull), fan, spiral, egg rain |
+
+A **beam** starts as a thin flickering line from the boss down the screen for 0.75 s. Then it
+fires a 5 px beam for about a second. The boss holds still while it fires, so move out of the line.
+The Bulwark's two beams leave a gap between them that the ship fits in.
 
 | Sprite | Name | Index | Chapter | Pilot | What it controls | What its fall frees |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -9,6 +9,7 @@ namespace audio {
         Shoot, Hit, Explode, BigExplode, PlayerHit, PlayerDie,
         PowerUp, ExtraLife, Shield, Coin, WaveStart, WaveClear, BossWarn,
         MenuMove, MenuSelect, MenuBack, Pause, GameOver, NewBest,
+        Static, BeamCharge, Beam,
         COUNT
     };
 
