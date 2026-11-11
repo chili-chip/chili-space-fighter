@@ -14,7 +14,7 @@ chosen one when leaving Halo, and the others end up with the Static.
 | **Silver** | ![Silver](img/ship-silver.png) | 1 | The rookie's ship, Nova's by default. Plain, reliable, the show's "everyone" fighter. |
 | **Sunset** | ![Sunset](img/ship-sunset.png) | 11 | Grounded after its pilot quit the show. Juno takes it in chapter 2 and finally retires the old skiff. |
 | **Viper** | ![Viper](img/ship-viper.png) | 21 | Taken from a Yards test bay in chapter 3. Zix rebuilds it and flies it badly but happily. |
-| **Nebula** | ![Nebula](img/ship-nebula.png) | 31 | Was a show prop, never flown. Ossa takes it in chapter 4: "IT IS UGLY. I LOVE IT." |
+| **Nebula** | ![Nebula](img/ship-nebula.png) | 31 | Was a show prop, never flown. Ossa takes it in chapter 4: "It is the ugliest thing I have ever seen, and I love it." |
 | **Crimson** | ![Crimson](img/ship-crimson.png) | 41 | Rook's ship. Grounded after chapter 4. Rook flies it again in chapter 6, on the other side. |
 
 ## Warden drones (enemies)
@@ -58,7 +58,7 @@ Its real name only shows after Kit's scan. Inside: cameras, lights, a fog machin
 ### The Tollgate
 
 Two orange pillars with a scanner eye between them, the gate's own guardian. Its fan of bullets is
-the gate "closing". Its line: **PAPERS, PLEASE.**
+the gate "closing". Its line: **"Papers, please."**
 
 ### The Cradle
 

@@ -33,6 +33,7 @@ watching the show and believed every episode. Nova is brave and a bit naive, and
 - **Learns:** that being a hero can mean saying no to the people who made the show.
 - **Arc (acceptance):** Nova has to face the fear the show put in them, most of all when meeting
   Zix. Nova gets it wrong once, says sorry and does better.
+- **Voice:** young, eager, talks a little too fast. Says what they think. Gets quieter and surer as the story goes on.
 - The player picks any ship colour. Nova flies it. The story does not change.
 
 ## AUX-7, later Kit
@@ -48,6 +49,7 @@ that scans the "mothership" in chapter 1 and finds the truth.
 - **Arc (freedom):** in chapter 5 the Prism sends a Concord override to every ship computer. AUX-7
   could obey. It chooses not to, and asks to be called **Kit**. From then on the script uses
   `[KIT n]`.
+- **Voice:** formal and exact, never uses contractions, reports odd things calmly. The humour is in how calm it is.
 - Kit never becomes a person in a body. The point is the choice, not the upgrade.
 
 ## Rook
@@ -64,6 +66,7 @@ pilot and a true believer: the Concord took Rook out of a hard life and gave a u
 - **Arc (acceptance, redemption):** Rook hunts Nova in chapter 4 in the Paragon and loses. Doc
   treats Rook. Rook expects a cell and gets an open door instead. In chapter 6 Rook flies the
   Crimson fighter at Nova's side.
+- **Voice:** confident, a TV professional. Calls Nova "rookie". After chapter 4 the polish is gone and the sentences are plainer.
 - Rook keeps the helmet on to the end. Who is under it is Rook's business.
 
 ## Marshal Brask
@@ -78,6 +81,7 @@ small price. That makes him dangerous.
 
 - **Wants:** safe Lanes, clear papers, good ratings.
 - **Ends:** his flagship falls, and the people of Halo, not the squad, take him to trial.
+- **Voice:** a newsreader's warmth with a soldier's orders underneath. Always "citizens". Never shouts unless the cameras are on.
 - Brask only appears on comms until chapter 6.
 
 ## DJ Lumo
@@ -90,6 +94,7 @@ The voice of the Static. A Sunn who broadcasts from a stolen relay in the Hollow
 plays music, and between songs reads the names of people taken to the Yards.
 
 - **Wants:** everyone on Halo to hear the truth.
+- **Voice:** late-night radio host. Friendly patter, questions to the listener, jokes that land softly on something serious.
 - Lumo delivers the `radio` lines and the [Free Lanes](script.md#free-lanes) lines.
 - Every Lumo box starts with a static frame before the face, like a channel being tuned.
 
@@ -106,6 +111,7 @@ scanner Juno never took off.
 - **Wants:** to get people out. Nothing else.
 - **Arc (acceptance):** Juno does not trust a Concord pilot, and says so. By the end of chapter 2
   Nova has earned a little trust. By chapter 6 they are friends.
+- **Voice:** blunt, dry, tired. Short on patience, long on sarcasm. Warms up slowly and never says so out loud.
 - Juno is proof that the line is papers, not species.
 
 ## Zix
@@ -121,6 +127,7 @@ five years.
 - **Wants:** to stop building cages, and to be seen as Zix.
 - **Arc (acceptance):** when they meet, Nova flinches. Zix has seen that flinch a thousand times.
   Zix does not make a speech. Zix just waits to see what Nova does next.
+- **Voice:** careful, slightly formal, no contractions. Very dry jokes, mostly about engineering. Polite even when hurt.
 - Later Zix tunes the Static's fighters and fixes Nova's ship between chapters.
 
 ## Ossa
@@ -133,7 +140,8 @@ Leader of the Static. A Korr pilot who flew in the Lane Wars, for the side that 
 patient and very hard to impress.
 
 - **Wants:** open gates. Not revenge, not power.
-- Ossa is the one who decides Rook gets a second chance. *"DOORS STAY OPEN."*
+- **Voice:** slow and heavy, like someone who has said goodbye a lot. Short statements, then one line that stays with you. No contractions.
+- Ossa is the one who decides Rook gets a second chance. *"That is why the doors stay open."*
 
 ## Doc
 
@@ -145,6 +153,7 @@ A Pell medic at the Hollow. Wears a grey breather because Halo air is too thin f
 anyone who comes through the door, Static or Concord.
 
 - **Wants:** fewer patients.
+- **Voice:** warm, practical, gently bossy. Talks to everyone like a patient who should be resting.
 - Doc patches up Rook in chapter 4 and is the first to talk to Rook as a person.
 
 ## Wisp
@@ -153,11 +162,12 @@ anyone who comes through the door, Static or Concord.
 
 Frames: 0 dim, 1 glowing, 2 dim, 3 bright (talking), 4 faint.
 
-A Glim crystal miner on Glimmer. Glim speak with light, so Kit translates. Wisp's lines are shown
-in brackets: `[WISP 3]` then the translated text.
+A Glim crystal miner on Glimmer. Glim speak with light, so Kit translates. Wisp's lines start
+with `(the light says)`.
 
 - **Wants:** the mining to stop, and Glimmer to stop being a jammer.
-- Wisp guides Nova to the weak point of the Prism. *"THE MOON WANTS TO SING AGAIN."*
+- **Voice:** translated light. Simple, a little like a poem. Calls the moon "her". Every line starts with `(the light says)`.
+- Wisp guides Nova to the weak point of the Prism. *"The moon has not sung since before I was born, and it wants to."*
 
 ## The static frame
 

@@ -38,7 +38,7 @@ At the end the Lanes open. The squad keeps the silly name. *"They made it a lie.
 
 ## Themes
 
-The game is an arcade shooter, so the themes live in short lines between waves. They are shown
+The game is an arcade shooter, so the themes live in the scenes between waves. They are shown
 through what characters do, not through speeches.
 
 | Theme | Where it shows |
@@ -89,59 +89,61 @@ show story.
 
 | Hook | When | Length |
 | --- | --- | --- |
-| `intro` | After PLAY, before wave 1 | 6 to 10 boxes |
+| `intro` | After PLAY, before wave 1 | 8 speeches |
 | `chapter_card` | Replaces "WAVE N / GET READY" on the first wave of a chapter | Title + place |
-| `chapter_start` | After the chapter card, before the first wave (chapters 2 to 6) | 4 to 7 boxes |
-| `radio` | Start of the third wave of a chapter | 1 to 2 boxes |
-| `boss_warning` | During "WARNING / BOSS APPROACHING" | 1 box |
-| `after_boss` | After a boss dies, before the next wave | 3 to 8 boxes |
-| `game_over` | Under "GAME OVER" in story chapters | 1 box |
-| `ending` | After the chapter 6 boss | 8 to 12 boxes |
-| `free_lanes` | Start of each boss wave from wave 35 on, picked in order | 1 box |
+| `chapter_start` | After the chapter card, before the first wave (chapters 2 to 6) | 4 to 7 speeches |
+| `radio` | Start of the third wave of a chapter | 1 to 4 speeches |
+| `boss_warning` | After "WARNING / BOSS APPROACHING", before the boss arrives | 1 to 2 speeches |
+| `after_boss` | After a boss dies, before the next wave | 4 to 11 speeches |
+| `game_over` | Under "GAME OVER" in story chapters | 1 speech |
+| `ending` | After the chapter 6 boss | 9 speeches |
+| `free_lanes` | Start of each boss wave from wave 35 on, picked in order | 1 speech |
 
-Score, combos, power-ups and the high score table stay as they are. The story never stops the player
-for more than a few button presses, and **B skips** a scene.
+Score, combos, power-ups and the high score table stay as they are. Scenes play between waves, never during the action, and **B skips** a scene.
 
 ## Writing for the console
 
 The console screen is 128 by 128 pixels. Dialogue uses a box along the bottom of the screen.
 
-```
-+--------------------------------+
-|                                |
-|          (game paused)         |
-|                                |
-+------+-------------------------+
-| face | ROOK                    |
-| 16x16| STAY IN FORMATION,      |
-|      | ROOKIE. CAMERAS ARE     |
-|      | ROLLING.                |
-+------+-------------------------+
-```
-
 - Portraits are 8 by 8 sprites from `assets/characters.png`, drawn at 2x (16 by 16).
-- Text uses `minimal_font`, in capitals like the rest of the game's UI.
-- **18 characters per line at most**, **3 lines per box at most**. Wrap by hand in the script.
-- The widest line in the script is 97 pixels in `minimal_font`. The text area next to the portrait is 104 pixels.
-- One thought per box. A then moves on.
-- No names the player has to remember before they matter. Each new name is said next to a face.
-- Avoid words that only make sense with a long backstory. If a box needs a footnote, cut it.
+- Dialogue uses `minimal_font` in normal sentence case, so long speech is easy to read. Titles and
+  chapter cards stay in capitals like the rest of the UI.
+- **The script is written as natural speech, not as pre-cut lines.** The game wraps the text to the
+  104 pixel text area and shows it three lines at a time (a page). A moves to the next page, B skips
+  the scene.
+- A speech is **3 pages at most** (about 150 characters). Longer thoughts are split into two
+  speeches, often with a different portrait frame.
+- Characters talk the way people talk: full sentences, their own voice, room for a joke. See the
+  voice notes in [Characters](characters.md).
+- Each new name is said next to a face, so the player never has to remember a name before it matters.
 
 ### Script format
 
-Every box in [script.md](script.md) looks like this, so a small tool can turn it into C++ arrays
+Every speech in [script.md](script.md) looks like this, so a small tool can turn it into C++ arrays
 later:
 
 ```text
 [ROOK 1]
-STAY IN FORMATION,
-ROOKIE. CAMERAS ARE
-ROLLING.
+And that's our cue. Smile for the camera, rookie. There are ten million screens watching your first flight tonight.
 ```
 
 The first line is the speaker and the portrait frame (0 to 4, see [Characters](characters.md)).
-`[STATIC]` means no face: draw the static frame (row 10 of the sheet). Lines in `( )` are stage
-directions for the game, not text.
+The second line is the whole speech on one line. `[STATIC]` means no face: draw the static frame
+(row 10 of the sheet). Lines in `( )` are stage directions for the game, not text.
+
+On the console that speech becomes two pages:
+
+```
++------+-------------------------+     +------+-------------------------+
+| face | ROOK                    |     | face | ROOK                    |
+| 16x16| And that's our cue.     |  A  | 16x16| ten million screens     |
+|      | Smile for the camera,   | --> |      | watching your first     |
+|      | rookie. There are     v |     |      | flight tonight.         |
++------+-------------------------+     +------+-------------------------+
+```
+
+The script has 120 speeches and 272 pages in total. Every speech was checked against the real
+`minimal_font` character widths.
 
 ## Not in this story
 
