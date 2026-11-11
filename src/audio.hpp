@@ -12,12 +12,14 @@ namespace audio {
         COUNT
     };
 
-    enum class Song { None, Title, Game, Boss };
+    // Title screen, the two stage themes, boss fights, story scenes, and the ending and credits
+    enum class Song { None, Title, StageA, StageB, Boss, Story, Ending };
 
     void init();
     void update(uint32_t dt);
 
     void play(Sfx sfx);
+    void talk(int voice);        // one short blip of a character's voice while their text appears
     void play_song(Song song);   // restarts only if a different song is requested
     void stop_music();
 

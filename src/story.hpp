@@ -33,7 +33,8 @@ constexpr int WAVES_PER_CHAPTER = 5;
 extern const Scene intro, ending, free_lanes, free_lanes_game_over;
 extern const Chapter chapters[CHAPTERS];
 
-// Plays a scene in a text box along the bottom of the screen: A shows the next page, B skips the scene.
+// Plays a scene in a text box along the bottom of the screen. The text appears letter by letter while
+// the face talks and blips; A shows the whole page, then the next one. B skips the scene.
 class Dialogue {
 public:
     void start(const Scene &scene);
@@ -47,11 +48,16 @@ private:
     Scene scene{nullptr, 0};
     int index = 0;  // speech
     int page = 0;
-    uint32_t shown_ms = 0;
+    uint32_t shown_ms = 0;   // since the page appeared
+    uint32_t done_ms = 0;    // since the whole page was shown
+    int revealed = 0;        // letters of the page shown so far
     std::vector<std::string> lines;  // the current speech, wrapped
 
     void open_speech();
+    void open_page();
     int pages() const { return ((int)lines.size() + LINES_PER_PAGE - 1) / LINES_PER_PAGE; }
+    int page_chars() const;
+    bool talking() const { return revealed < page_chars(); }
     void draw_card(uint32_t time);
 };
 

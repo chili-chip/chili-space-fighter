@@ -66,7 +66,6 @@ The story uses that shape and adds no new gameplay.
 | 16 to 20 | 4. Old Wings | The Drift | The Paragon (Rook) |
 | 21 to 25 | 5. The Signal | Glimmer | The Prism |
 | 26 to 30 | 6. Open Sky | Halo Station | The Bulwark (Brask) |
-| 31 and on | Free Lanes | Anywhere | All six, looping |
 
 ```mermaid
 flowchart LR
@@ -80,7 +79,7 @@ flowchart LR
     BF --> A[After-boss scene]
     A -->|chapters 1 to 5| W1
     A -->|chapter 6| E[Ending]
-    E --> F[Free Lanes: endless]
+    E --> F[THE END, credits]
 ```
 
 ### Scene hooks
@@ -98,9 +97,9 @@ show story.
 | `after_boss` | After a boss dies, before the next wave | 4 to 11 speeches |
 | `game_over` | Under "GAME OVER" in story chapters | 1 speech |
 | `ending` | After the chapter 6 boss | 9 speeches |
-| `free_lanes` | Start of each boss wave from wave 35 on, picked in order | 1 speech |
+| `free_lanes` | Not used yet: the story ends after chapter 6, and endless mode has no story | 1 speech each |
 
-Score, combos, power-ups and the high score table stay as they are. Scenes play between waves, never during the action, and **B skips** a scene.
+Score, combos and power-ups stay as they are. Scenes play between waves, never during the action, and **B skips** a scene. The story is its own mode (PLAY > STORY); endless mode (PLAY > ENDLESS) has no scenes and keeps the high score table.
 
 ## Writing for the console
 
@@ -152,11 +151,13 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
 
 | | |
 | --- | --- |
+| ![Play menu](img/game-modes.png) | **PLAY menu.** STORY plays Open Sky; ENDLESS is the arcade game with high scores. |
 | ![Title card](img/game-title-card.png) | **Title card.** The intro opens as the show. `(title card: ...)` in the script; `TURBO` is drawn as the logo. |
-| ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The arrow means A shows more. |
+| ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The text appears letter by letter while the face talks (it switches to its talking frame and bobs) and a voice blips. The arrow means A goes on. |
 | ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
 | ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
 | ![Game over line](img/game-game-over.png) | **Game over line.** Shown under GAME OVER. A or B goes on to the score screen. |
+| ![The end](img/game-the-end.png) | **THE END.** After the ending scene: the score, then A for the credits. |
 
 ### When scenes play
 
@@ -168,14 +169,32 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
 | `radio` | Third wave of a chapter, after "WAVE N", before the enemies. |
 | `boss_warning` | After "WARNING / BOSS APPROACHING", before the boss flies in. |
 | `after_boss` | After "WAVE CLEAR!" on a boss wave, before the next wave. |
-| `ending` | After the chapter 6 `after_boss`. Then wave 31 and the Free Lanes. |
-| `free_lanes` | Before the boss warning on waves 35, 40, 45 and on, one speech each, then loop. |
-| `game_over` | Under the GAME OVER banner. Chapter 6 has none, so nothing shows there. |
+| `ending` | After the chapter 6 `after_boss`. Then THE END with the score, and the credits. |
+| `game_over` | Under the GAME OVER banner. Chapter 6 has none, so nothing shows there. A retries the chapter. |
 
-- **A** shows the next page. **B** skips the whole scene. Input waits a quarter second on each new
-  page, so a player still holding or mashing fire does not skip it unread.
+- Text appears at about 35 letters a second. **A** shows the rest of the page at once, then goes to
+  the next page. **B** skips the whole scene. A waits a quarter second after a page is complete, so
+  a player still mashing fire does not skip it unread.
+- Each character has their own voice: a short square-wave blip at their own pitch every other
+  letter (the Static crackles). The talking frame for each face is in `talk_frame()` in `src/story.cpp`.
 - The ship does not move or fire while a scene is open. MENU still pauses.
-- Every run tells the story from the start. Score, combos and the high score table are unchanged.
+- A game over in story mode restarts the chapter from its card. Story scores do not go in the
+  high score table.
+
+### Music
+
+The music changes with the situation. All six songs are public domain tracker songs, converted to
+note sheets for the game's chiptune player (see the README credits).
+
+| Situation | Song |
+| --- | --- |
+| Title and menus | XLR8 (Jam) |
+| Waves in chapters 1, 3, 5 | Highway Encounter (Jam) |
+| Waves in chapters 2, 4, 6 | 8-bit Castle (Jam) |
+| Boss warning and boss story line | silence |
+| Boss fight | May is 4 Her (Drozerix) |
+| Story scenes | heatwave cruise (Jam) |
+| Ending, THE END and credits | late night coffee (Jam) |
 
 ### Changing the dialogue
 
@@ -197,7 +216,7 @@ What the tool reads:
 | `## Intro`, `## Ending` | the intro and ending scenes |
 | `## Chapter N: ...` with `### Chapter card` | the card (first `text` block, 3 lines) and `chapter_start` (second block) |
 | `### Radio`, `### Boss warning`, `### After the boss`, `### Game over` | that chapter's scene |
-| `## Free Lanes` | one speech per Free Lanes boss wave; `### Game over in Free Lanes` is its game over line |
+| `## Free Lanes` | read and checked, but not played yet |
 | `[NAME FRAME]` | a speech. Names: `NOVA`, `AUX-7`, `KIT`, `ROOK`, `BRASK`, `LUMO`, `JUNO`, `ZIX`, `OSSA`, `DOC`, `WISP` |
 
 Prose outside the `text` blocks is for people and is ignored. Any scene can be left out; the game

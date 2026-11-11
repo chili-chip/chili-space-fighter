@@ -42,10 +42,11 @@ namespace {
     }
 }
 
-void World::start(uint8_t ship_color, Starfield *s) {
+void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter) {
     stars = s;
+    mode = m;
     score = 0;
-    wave = 1;
+    wave = mode == Mode::Story ? (start_chapter - 1) * story::WAVES_PER_CHAPTER + 1 : 1;
     game_over_said = false;
     dialogue = story::Dialogue();
     combo = 0;
@@ -57,8 +58,16 @@ void World::start(uint8_t ship_color, Starfield *s) {
     powerups.clear();
     ProjectileManager::get_instance().clear();
     fx::clear();
-    audio::play_song(audio::Song::Game);
-    play(story::intro, After::Card);
+    if (mode == Mode::Story && wave == 1) {
+        play(story::intro, After::Card);
+    } else {
+        continue_after(After::Card);
+    }
+}
+
+audio::Song World::stage_song() const {
+    // the two stage themes take turns, five waves (one chapter) each
+    return ((wave - 1) / story::WAVES_PER_CHAPTER) % 2 ? audio::Song::StageB : audio::Song::StageA;
 }
 
 void World::play(const story::Scene &scene, After then) {
@@ -69,18 +78,26 @@ void World::play(const story::Scene &scene, After then) {
     dialogue.start(scene);
     after_story = then;
     set_phase(Phase::Story, 0);
+    // the boss warning keeps its silence; everything else talks over calmer music
+    if (then == After::Complete) {
+        audio::play_song(audio::Song::Ending);
+    } else if (then != After::Boss) {
+        audio::play_song(audio::Song::Story);
+    }
 }
 
 void World::continue_after(After then) {
     switch (then) {
         case After::Card:
+            if (!is_boss_wave()) audio::play_song(stage_song());
             set_phase(Phase::Intro, chapter_first_wave() ? CHAPTER_CARD_MS : INTRO_MS);
             audio::play(audio::Sfx::WaveStart);
             break;
         case After::Wave: begin_wave(); break;
         case After::Boss: spawn_boss(); break;
-        case After::Ending: play(story::ending, After::NextWave); break;
+        case After::Ending: play(story::ending, After::Complete); break;
         case After::NextWave: next_wave(); break;
+        case After::Complete: set_phase(Phase::Complete, 0); break;
     }
 }
 
@@ -91,6 +108,7 @@ void World::begin_wave() {
         audio::stop_music();
         audio::play(audio::Sfx::BossWarn);
     } else {
+        audio::play_song(stage_song());
         build_wave();
         set_phase(Phase::Fighting, 0);
     }
@@ -337,10 +355,6 @@ void World::update(uint32_t dt) {
                     play(story::chapters[ch - 1].start, After::Wave);  // chapter 1 had the intro instead
                 } else if (ch > 0 && nth == 2) {
                     play(story::chapters[ch - 1].radio, After::Wave);
-                } else if (ch == 0 && is_boss_wave() && wave >= 35 && story::free_lanes.count > 0) {
-                    // one line from the Free Lanes radio per boss wave, in order, then loop
-                    int i = (wave / 5 - 7) % story::free_lanes.count;
-                    play(story::Scene{&story::free_lanes.lines[i], 1}, After::Wave);
                 } else {
                     begin_wave();
                 }
@@ -407,7 +421,7 @@ void World::update(uint32_t dt) {
                 perfect_bonus = !hit_this_wave;
                 if (perfect_bonus) add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
                 set_phase(Phase::Cleared, CLEARED_MS + 1200);
-                audio::play_song(audio::Song::Game);
+                audio::play_song(stage_song());
             }
             break;
 
@@ -423,11 +437,14 @@ void World::update(uint32_t dt) {
             }
             break;
 
+        case Phase::Complete:
+            break;
+
         case Phase::Over:
             if (!game_over_said && OVER_MS - phase_ms > GAME_OVER_LINE_MS) {
                 game_over_said = true;
                 int ch = chapter();
-                dialogue.start(ch > 0 ? story::chapters[ch - 1].game_over : story::free_lanes_game_over);
+                if (ch > 0) dialogue.start(story::chapters[ch - 1].game_over);
             }
             dialogue.update(dt);
             break;

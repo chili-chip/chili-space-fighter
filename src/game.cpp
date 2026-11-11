@@ -15,7 +15,7 @@
 
 namespace {
 
-enum class State { Title, Options, HighScores, HowTo, Credits, Playing, Paused, GameOver };
+enum class State { Title, ModeSelect, Options, HighScores, HowTo, Credits, Playing, Paused, GameOver, StoryEnd };
 
 const char *const VERSION = "v1.0.0";
 const char *const SHIP_NAMES[5] = {"SILVER", "SUNSET", "VIPER", "NEBULA", "CRIMSON"};
@@ -114,9 +114,30 @@ void draw_hint(const char *text, uint32_t time) {
 const char *const TITLE_ITEMS[] = {"PLAY", "HIGH SCORES", "OPTIONS", "HOW TO PLAY", "CREDITS"};
 constexpr int TITLE_COUNT = 5;
 
-void start_game() {
-    world.start(save_data.ship, &stars);
+const char *const MODE_ITEMS[] = {"STORY", "ENDLESS", "BACK"};
+
+void start_game(World::Mode mode, int chapter = 1) {
+    world.start(save_data.ship, &stars, mode, chapter);
     go(State::Playing);
+}
+
+void update_mode_select() {
+    menu_nav(3);
+    if (just_pressed(Button::B) || (just_pressed(Button::A) && cursor == 2)) {
+        audio::play(audio::Sfx::MenuBack);
+        go(State::Title, 0);
+    } else if (just_pressed(Button::A)) {
+        audio::play(audio::Sfx::MenuSelect);
+        start_game(cursor == 0 ? World::Mode::Story : World::Mode::Endless);
+    }
+}
+
+void draw_mode_select(uint32_t time) {
+    draw_heading("PLAY", time);
+    draw_menu(MODE_ITEMS, 3, 34, time);
+    const char *about[] = {"OPEN SKY: SIX CHAPTERS", "WAVES FOREVER, HIGH SCORES", ""};
+    shadow_text(about[cursor], minimal_font, Point(SCREEN_W / 2, 84), Pen(150, 150, 190), TextAlign::top_center);
+    draw_hint("B BACK", time);
 }
 
 void update_title() {
@@ -126,7 +147,7 @@ void update_title() {
     if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
         switch (cursor) {
-            case 0: start_game(); break;
+            case 0: go(State::ModeSelect); break;
             case 1: go(State::HighScores); break;
             case 2: go(State::Options); break;
             case 3: go(State::HowTo); break;
@@ -254,6 +275,7 @@ void update_back_only(int title_cursor) {
     if (just_pressed(Button::A) || just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title, title_cursor);
+        audio::play_song(audio::Song::Title);  // coming back from the credits after the ending
     }
 }
 
@@ -282,14 +304,14 @@ void draw_credits(uint32_t time) {
     struct Line { const char *a; Pen pen; };
     const Line lines[] = {
         {"GAME", Pen(140, 160, 255)},
-        {"TERIYAKIGOD", Pen(255, 255, 255)},
-        {"CHILICHIP", Pen(255, 120, 90)},
-        {"", Pen(0, 0, 0)},
-        {"MUSIC + SOUND", Pen(140, 160, 255)},
-        {"ORIGINAL CHIPTUNE", Pen(255, 255, 255)},
-        {"", Pen(0, 0, 0)},
+        {"TERIYAKIGOD / CHILICHIP", Pen(255, 255, 255)},
+        {"SPRITES", Pen(140, 160, 255)},
+        {"GUSTAVO VITURI", Pen(255, 255, 255)},
+        {"MUSIC (PUBLIC DOMAIN)", Pen(140, 160, 255)},
+        {"JAM, DROZERIX", Pen(255, 255, 255)},
+        {"MODARCHIVE.ORG", Pen(150, 150, 190)},
         {"BUILT WITH 32BLIT SDK", Pen(140, 160, 255)},
-        {"FOR THE VGC ZERO", Pen(255, 255, 255)},
+        {"FOR THE CHILICHIP CONSOLE", Pen(255, 255, 255)},
     };
     for (int i = 0; i < 9; i++) {
         shadow_text(lines[i].a, minimal_font, Point(SCREEN_W / 2, 22 + i * 9), lines[i].pen, TextAlign::top_center);
@@ -312,10 +334,16 @@ void update_playing(uint32_t dt) {
         fade_ms = 0;
         return;
     }
+    if (world.is_complete()) {
+        final_score = world.score;
+        go(State::StoryEnd);
+        return;
+    }
     if (world.is_over()) {
         final_score = world.score;
         final_wave = world.wave;
-        final_rank = score_rank(final_score);
+        // only endless runs go in the high score table
+        final_rank = world.mode == World::Mode::Endless ? score_rank(final_score) : -1;
         entering_name = final_rank >= 0;
         entry_pos = 0;
         memcpy(entry_name, save_data.last_name, 4);
@@ -377,7 +405,7 @@ void update_game_over() {
     }
     if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
-        start_game();
+        start_game(world.mode, world.chapter());  // story mode retries the chapter
     } else if (just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title);
@@ -398,7 +426,10 @@ void draw_game_over(uint32_t time) {
     snprintf(buf, sizeof(buf), "REACHED WAVE %d", final_wave);
     shadow_text(buf, minimal_font, Point(SCREEN_W / 2, 55), Pen(200, 200, 230), TextAlign::top_center);
 
-    if (final_rank == 0) {
+    if (world.mode == World::Mode::Story) {
+        snprintf(buf, sizeof(buf), "CHAPTER %d", world.chapter());
+        shadow_text(buf, outline_font, Point(SCREEN_W / 2, 67), Pen(140, 160, 255), TextAlign::top_center);
+    } else if (final_rank == 0) {
         int bounce = (int)fabsf(sinf(time * 0.008f) * 3);
         shadow_text("NEW BEST!", outline_font, Point(SCREEN_W / 2, 68 - bounce), rainbow(time * 0.012f), TextAlign::top_center);
     } else if (final_rank > 0) {
@@ -430,8 +461,32 @@ void draw_game_over(uint32_t time) {
     }
 
     if (state_time > 900 && (time / 400) % 2) {
-        shadow_text("A  PLAY AGAIN", minimal_font, Point(SCREEN_W / 2, 88), Pen(255, 230, 120), TextAlign::top_center);
+        bool story = world.mode == World::Mode::Story;
+        shadow_text(story ? "A  RETRY CHAPTER" : "A  PLAY AGAIN", minimal_font, Point(SCREEN_W / 2, 88), Pen(255, 230, 120), TextAlign::top_center);
         shadow_text("B  TITLE", minimal_font, Point(SCREEN_W / 2, 98), Pen(180, 180, 210), TextAlign::top_center);
+    }
+}
+
+void update_story_end() {
+    if (state_time > 1500 && (just_pressed(Button::A) || just_pressed(Button::B))) {
+        audio::play(audio::Sfx::MenuSelect);
+        go(State::Credits);
+    }
+}
+
+void draw_story_end(uint32_t time) {
+    world.draw(time);
+    screen.pen = Pen(0, 0, 0, 150);
+    screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
+    draw_panel(Rect(10, 24, 108, 80));
+    shadow_text("OPEN SKY", outline_font, Point(SCREEN_W / 2, 31), rainbow(time * 0.004f), TextAlign::top_center);
+    shadow_text("THE END", minimal_font, Point(SCREEN_W / 2, 45), Pen(200, 200, 230), TextAlign::top_center);
+    char buf[24];
+    snprintf(buf, sizeof(buf), "%06lu", (unsigned long)final_score);
+    shadow_text("SCORE", minimal_font, Point(SCREEN_W / 2, 60), Pen(140, 160, 255), TextAlign::top_center);
+    shadow_text(buf, outline_font, Point(SCREEN_W / 2, 69), Pen(255, 255, 255), TextAlign::top_center);
+    if (state_time > 1500 && (time / 400) % 2) {
+        shadow_text("A  CREDITS", minimal_font, Point(SCREEN_W / 2, 88), Pen(255, 230, 120), TextAlign::top_center);
     }
 }
 
@@ -479,6 +534,8 @@ void update(uint32_t time) {
 
     switch (state) {
         case State::Title:      update_title(); break;
+        case State::ModeSelect: update_mode_select(); break;
+        case State::StoryEnd:   update_story_end(); break;
         case State::Options:    update_options(); break;
         case State::HighScores: update_back_only(1); break;
         case State::HowTo:      update_back_only(3); break;
@@ -496,6 +553,8 @@ void render(uint32_t time) {
 
     switch (state) {
         case State::Title:      draw_title(time); break;
+        case State::ModeSelect: draw_mode_select(time); break;
+        case State::StoryEnd:   draw_story_end(time); break;
         case State::Options:    draw_options(time); break;
         case State::HighScores:
             draw_heading("HIGH SCORES", time);
