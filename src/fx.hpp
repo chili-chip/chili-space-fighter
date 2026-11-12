@@ -13,6 +13,8 @@ namespace fx {
     // delay_ms lets a big death chain go off over time
     void explosion(Vec2 pos, Boom kind = Boom::Small, uint32_t delay_ms = 0);
     void particles(Vec2 pos, Pen color, int count, float speed, uint32_t life_ms = 400);
+    // one puff of a burning hull: flames that cool from white to red and smoke, trailing down the screen
+    void fire(Vec2 pos);
     void popup(Vec2 pos, const char *text, Pen color);
     void shake(float amount);
 

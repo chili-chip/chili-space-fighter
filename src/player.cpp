@@ -11,7 +11,6 @@ namespace {
     constexpr int BULLET_SPRITE = 2;
     const int SHIP_SPRITE[5] = {1, 11, 21, 31, 41};  // centre frame, tilt frames are -1 / +1
     constexpr float WING_GAP = 14;                   // px between the player and the wingman
-    const int FLAME_FRAMES[4] = {44, 45, 46, 47};    // fire on a burning ship, in assets/misc.png
 }
 
 void draw_flame(Vec2 ship, float tilt, bool thrust, uint32_t time) {
@@ -134,9 +133,7 @@ void Player::update(uint32_t dt) {
         repair_ms -= dt;
         // the hull pips fill up as the repair goes
         hull = std::min(MAX_HULL, (int)((REPAIR_MS - repair_ms) * (MAX_HULL + 1) / REPAIR_MS));
-        if ((anim_time / 90) != ((anim_time - dt) / 90)) {
-            fx::particles(position + Vec2(frand(-2, 2), 0), Pen(110, 100, 110), 1, 0.02f, 500);  // smoke
-        }
+        if ((anim_time / 25) != ((anim_time - dt) / 25)) fx::fire(position);
         if (repair_ms <= 0) {
             repair_ms = 0;
             hull = MAX_HULL;
@@ -184,8 +181,9 @@ void Player::draw(uint32_t time) {
     draw_flame(position, velocity.x, velocity.y < -0.01f, anim_time);
     draw_sprite(sheets.ships, sprite, position);
     if (repairing()) {
-        // on fire: a flickering flame on the hull
-        draw_sprite(sheets.misc, FLAME_FRAMES[(anim_time / 70) % 4], position + Vec2(1, -2));
+        // on fire: the hull glows with flickering heat (the flames and smoke are fx particles)
+        uint8_t heat = 20 + (blit::random() & 31);
+        draw_sprite_flash(sheets.ships, sprite, position, Size(1, 1), Pen(255, 110, 30, heat));
     }
 
     if (shielded()) {
