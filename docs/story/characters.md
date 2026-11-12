@@ -2,8 +2,8 @@
 
 Every character uses one row of `assets/characters.png`. A row has five 8 by 8 frames. The script
 writes a box as `[NAME FRAME]`, for example `[NOVA 1]`. While the text appears the face goes round
-all five frames. When the page is shown it rests on the script's frame with the mouth closed: a
-talking or shouting frame shows as the closest closed frame (for example Nova's shout as her smile).
+all five frames. The frame in the script sets where that cycle starts.
+When the page is shown every face rests on frame 0, with the mouth closed.
 
 The sheet is 42 by 88 pixels with a 1 pixel border on the left. Frame `f` of row `r` is at
 x = `1 + f * 8`, y = `r * 8`.
