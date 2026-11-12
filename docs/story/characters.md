@@ -104,8 +104,8 @@ plays music, and between songs reads the names of people taken to the Yards.
 
 Frames: 0 neutral, 1 talking, 2 calm, 3 serious, 4 smile.
 
-A human runner, born in the Yards. Juno has no papers and never had any. Juno flies an old cargo
-skiff and smuggles Outlander families past the Tollgate. The cyan lens over one eye is a Yards work
+A human runner, born in the Yards. Juno has no papers and never had any. Juno flies the Sunset, a show
+fighter bought for scrap after its pilot quit, and smuggles Outlander families past the Tollgate. The cyan lens over one eye is a Yards work
 scanner Juno never took off.
 
 - **Wants:** to get people out. Nothing else.

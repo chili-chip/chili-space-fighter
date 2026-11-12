@@ -35,6 +35,8 @@ inline float lerpf(float a, float b, float t) { return a + (b - a) * t; }
 void draw_sprite(Surface *sheet, int index, Vec2 pos, Size span = Size(1, 1), uint8_t transform = 0);
 // Same, but as a solid white silhouette (hit flash)
 void draw_sprite_flash(Surface *sheet, int index, Vec2 pos, Size span = Size(1, 1), Pen pen = Pen(255, 255, 255));
+// Same, with each pixel's brightness mapped onto three pens (dark, mid, bright)
+void draw_sprite_ramp(Surface *sheet, int index, Vec2 pos, const Pen ramp[3]);
 // Text with a 1px dark shadow so it reads on top of the starfield
 void shadow_text(std::string_view s, const Font &font, Point p, Pen pen, TextAlign align = TextAlign::top_left);
 // HSV-ish rainbow colour for animated text

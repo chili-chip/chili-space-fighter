@@ -10,6 +10,7 @@ change it.
 | [Characters](characters.md) | The ten portraits in `assets/characters.png`: who they are, what they want, how they change |
 | [Ships](ships.md) | Player fighters, Warden drones and the six bosses in `assets/ships.png` |
 | [Script](script.md) | Every line of dialogue, chapter by chapter, in the format the console will show |
+| [Backgrounds](backgrounds.md) | The background of each chapter, and the sprites needed to replace the code-drawn props |
 
 ## The story in one minute
 
@@ -55,25 +56,27 @@ both sides, and so are aliens. Nobody's people are "the evil ones". The player o
 
 ## How the story fits the game
 
-The game already has endless waves with a boss every fifth wave, and six boss sprites that loop.
-The story uses that shape and adds no new gameplay.
+The game has endless waves with a boss every tenth wave, and six boss sprites that loop. A chapter
+is ten waves with its boss at the end.
 
 | Waves | Chapter | Place | Boss |
 | --- | --- | --- | --- |
-| 1 to 5 | 1. The Show | Halo Station | The Herald |
-| 6 to 10 | 2. No Papers | The Tollgate | The Tollgate |
-| 11 to 15 | 3. The Yards | The Rust Ring | The Cradle |
-| 16 to 20 | 4. Old Wings | The Drift | The Paragon (Rook) |
-| 21 to 25 | 5. The Signal | Glimmer | The Prism |
-| 26 to 30 | 6. Open Sky | Halo Station | The Bulwark (Brask) |
+| 1 to 10 | 1. The Show | Halo Station | The Herald |
+| 11 to 20 | 2. No Papers | The Tollgate | The Tollgate |
+| 21 to 30 | 3. The Yards | The Rust Ring | The Cradle |
+| 31 to 40 | 4. Old Wings | The Drift | The Paragon (Rook) |
+| 41 to 50 | 5. The Signal | Glimmer | The Prism |
+| 51 to 60 | 6. Open Sky | Halo Station | The Bulwark (Brask) |
+
+Each chapter has its own background; see [Backgrounds](backgrounds.md).
 
 ```mermaid
 flowchart LR
     T[Title] --> I[Intro scene]
     I --> W1[Chapter card]
     W1 --> CS[Chapter start scene]
-    CS --> W[Waves 1 to 4]
-    W --> R[Radio line on wave 3]
+    CS --> W[Waves 1 to 9]
+    W --> R[Radio scene on wave 5]
     W --> B[Boss warning line]
     B --> BF[Boss fight]
     BF --> A[After-boss scene]
@@ -92,7 +95,7 @@ show story.
 | `intro` | After PLAY, before wave 1 | 8 speeches |
 | `chapter_card` | Replaces "WAVE N / GET READY" on the first wave of a chapter | Title + place |
 | `chapter_start` | After the chapter card, before the first wave (chapters 2 to 6) | 4 to 7 speeches |
-| `radio` | Start of the third wave of a chapter | 1 to 4 speeches |
+| `radio` | Start of the fifth wave of a chapter | 1 to 6 speeches |
 | `boss_warning` | After "WARNING / BOSS APPROACHING", before the boss arrives | 1 to 2 speeches |
 | `after_boss` | After a boss dies, before the next wave | 4 to 11 speeches |
 | `game_over` | Under "GAME OVER" in story chapters | 1 speech |
@@ -156,6 +159,9 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
 | ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The text appears letter by letter while the face talks (it switches to its talking frame and bobs) and a voice blips. The arrow means A goes on. |
 | ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
 | ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
+| ![Comms static](img/game-static.png) | **Comms static.** When someone new starts talking, and when the last speaker signs off, the avatar box shows snow and the name scrambles in (or out) letter by letter for 0.4 s, with a crackle. |
+| ![Juno on the wing](img/game-wingman.png) | **Autopilot and Juno.** While a scene is open the ship flies itself to the middle, above the box. In chapter 2 Juno's Sunset flies on its wing, in scenes and in the fight. |
+| ![A beam](img/game-beam.png) | **Beam attack.** The Tollgate, Paragon, Prism and Bulwark fire beams; the Bulwark fires one from each hull. A thin flickering line warns first. |
 | ![Game over line](img/game-game-over.png) | **Game over line.** Shown under GAME OVER. A or B goes on to the score screen. |
 | ![The end](img/game-the-end.png) | **THE END.** After the ending scene: the score, then A for the credits. |
 
@@ -177,7 +183,13 @@ The script has 120 speeches and 272 pages in total. Every speech was checked aga
   a player still mashing fire does not skip it unread.
 - Each character has their own voice: a short square-wave blip at their own pitch every other
   letter (the Static crackles). The talking frame for each face is in `talk_frame()` in `src/story.cpp`.
-- The ship does not move or fire while a scene is open. MENU still pauses.
+- While a scene is open the ship flies itself to the middle of the screen, above the text box, and
+  does not fire. In chapter 2 Juno's Sunset flies next to it. MENU still pauses.
+- A page ends at the end of a sentence. When a sentence is too long for one page, it is split after
+  a comma; only a part with no comma that is still too long is split between words.
+- When someone new starts talking, the avatar box shows static for 0.4 s with a crackle of noise,
+  and the name arrives as scrambled letters that settle one by one, like data coming in. When the
+  last speaker signs off, the same plays backwards. The static stays inside the avatar box.
 - A game over in story mode restarts the chapter from its card. Story scores do not go in the
   high score table.
 
@@ -233,8 +245,10 @@ conversation keeps moving.
 
 ## Not in this story
 
-- No new mechanics, weapons or enemies. Everything uses the existing sprites.
-- Stage directions like "(Juno takes the Sunset fighter)" are not acted out. The ship is still
-  the one picked in Options.
+- No new weapons or enemies. Everything uses the existing sprites; the backgrounds are drawn in
+  code from them until new art exists ([Backgrounds](backgrounds.md) lists what is needed).
+- Stage directions like "(Ossa takes the Nebula fighter)" are not acted out. The ship is still
+  the one picked in Options. The one exception is Juno's Sunset, which flies on your wing in
+  chapter 2.
 - No branching or saves for story progress. A run is one telling of the story.
 - No real-world groups, flags or slogans. The themes stay in a made-up world on purpose.

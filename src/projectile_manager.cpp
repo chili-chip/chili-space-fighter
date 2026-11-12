@@ -47,8 +47,16 @@ void ProjectileManager::update(uint32_t dt) {
     }
 }
 
+namespace {
+    // the sheet's cyan and blue bullets look like stars, so enemies fire them in red
+    const Pen ENEMY_RED[3] = {Pen(170, 0, 30), Pen(255, 40, 50), Pen(255, 210, 190)};
+    bool blends_in(int sprite) { return sprite == 0 || sprite == 9 || sprite == 14 || sprite == 21; }
+}
+
 void ProjectileManager::draw() {
     for (auto &p : pool) {
-        if (p.active) draw_sprite(sheets.projectiles, p.sprite_index, p.position);
+        if (!p.active) continue;
+        if (p.owner == Faction::ENEMY && blends_in(p.sprite_index)) draw_sprite_ramp(sheets.projectiles, p.sprite_index, p.position, ENEMY_RED);
+        else draw_sprite(sheets.projectiles, p.sprite_index, p.position);
     }
 }

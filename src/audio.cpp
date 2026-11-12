@@ -199,11 +199,16 @@ SFX(sfx_game_over, 7, {392, 392, 220, TR, 0x5000}, {330, 330, 220, TR, 0x5000},
 SFX(sfx_new_best, 7, {523, 523, 80, SQ, 0x2400}, {659, 659, 80, SQ, 0x2400}, {784, 784, 80, SQ, 0x2400},
     {1047, 1047, 160, SQ, 0x2400}, {784, 784, 80, SQ, 0x2400}, {1047, 1047, 80, SQ, 0x2400},
     {1319, 1319, 80, SQ, 0x2400}, {1568, 1568, 360, SQ, 0x2400})
+// comms crackle, on the shot channel: the ship never fires while someone is talking
+SFX(sfx_static, 4, {7000, 2500, 90, NZ, 0x2800}, {1800, 5000, 70, NZ, 0x1c00}, {6000, 3000, 100, NZ, 0x1400})
+SFX(sfx_beam_charge, 7, {200, 1200, 700, SQ, 0x1800})
+SFX(sfx_beam, -1, {1800, 1200, 300, NZ, 0x3800}, {140, 110, 600, SW, 0x3000})
 
 const SfxDef *const SFX_TABLE[(int)Sfx::COUNT] = {
     &sfx_shoot, &sfx_hit, &sfx_explode, &sfx_big_explode, &sfx_player_hit, &sfx_player_die,
     &sfx_power_up, &sfx_extra_life, &sfx_shield, &sfx_coin, &sfx_wave_start, &sfx_wave_clear, &sfx_boss_warn,
     &sfx_menu_move, &sfx_menu_select, &sfx_menu_back, &sfx_pause, &sfx_game_over, &sfx_new_best,
+    &sfx_static, &sfx_beam_charge, &sfx_beam,
 };
 
 struct Voice {

@@ -50,9 +50,15 @@ private:
     float dive_x = 0;     // Hover: x target when diving
 };
 
-// Big ship at the end of every fifth wave.
+// What a boss can do. Each boss has its own list and goes round it.
+enum class BossAttack : uint8_t { Fan, Burst, Spiral, Ring, Rain, Beam };
+
+// Big ship at the end of every chapter (every tenth wave).
 class Boss {
 public:
+    static constexpr int32_t BEAM_CHARGE_MS = 750;  // the warning line before the beam
+    static constexpr int32_t BEAM_FIRE_MS = 950;
+
     Vec2 position;
     int health = 0, max_health = 1;
     int level = 1;        // 1 for the first boss, 2 for the second...
@@ -60,20 +66,29 @@ public:
     int32_t attack_timer = 0;
     int32_t flash_ms = 0;
     int32_t dying_ms = 0;
-    uint8_t attack = 0;
+    int32_t beam_ms = 0;  // counts down through the charge, then the beam; 0 when there is no beam
+    uint8_t attack = 0;   // index into this boss's attack list
     uint8_t shots_left = 0;
     float spiral_angle = 0;
+    float move_s = 0;     // time spent moving, it holds still while it fires a beam
     bool active = false;
     bool dying = false;
 
     void spawn(int level);
     void update(uint32_t dt, Vec2 player_pos, bool player_alive);
-    void draw();
+    void draw(uint32_t time);
     bool take_damage(int amount);  // true when it starts dying
     bool finished() const { return dying && dying_ms <= 0; }
     bool entering() const { return age < 2200; }
     int points() const { return 2500 * level; }
     int sprite_index() const;
+    // true while the beam is firing and touches r
+    bool beam_hits(const Rect &r) const;
 
     Rect get_hitbox() const { return Rect(position.x - 7, position.y - 6, 14, 12); }
+
+private:
+    bool beam_firing() const { return beam_ms > 0 && beam_ms <= BEAM_FIRE_MS; }
+    void start_attack(BossAttack a, bool enraged);
+    void fire(BossAttack a, Vec2 player_pos, bool enraged);
 };

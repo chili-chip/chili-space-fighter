@@ -104,7 +104,7 @@ void Enemy::shoot(Vec2 player_pos) {
         case FireStyle::None:
             break;
         case FireStyle::Down:
-            pm.fire(muzzle, bullet_speed, PI_F, 0, Faction::ENEMY);
+            pm.fire(muzzle, bullet_speed, PI_F, 14, Faction::ENEMY);
             break;
         case FireStyle::Aimed:
             pm.fire_at(muzzle, player_pos, bullet_speed * 1.1f, 14);
@@ -176,13 +176,40 @@ void Enemy::draw() {
 // ---------------------------------------------------------------------------
 
 namespace {
-    const int BOSS_SPRITES[6] = {64, 66, 68, 84, 86, 88};
     constexpr float BOSS_Y = 26;
     constexpr uint32_t BOSS_DEATH_MS = 1800;
+    constexpr int BEAM_HALF_W = 2;  // the beam is 5 px wide
+
+    struct BossPreset {
+        int sprite;
+        BossAttack attacks[4];
+        uint8_t attack_count;
+        int8_t beams[2];     // beam x offsets from the centre
+        uint8_t beam_count;
+        Pen beam;
+    };
+
+    // in story order, see docs/story/ships.md
+    const BossPreset BOSSES[6] = {
+        // the Herald, a show ship: big pretty fans and bursts
+        {64, {BossAttack::Fan, BossAttack::Burst}, 2, {0}, 0, Pen()},
+        // the Tollgate: the gate closing (fan), papers checks (aimed bursts), and its scanner eye
+        {66, {BossAttack::Fan, BossAttack::Beam, BossAttack::Burst}, 3, {0}, 1, Pen(255, 160, 40)},
+        // the Cradle drops its eggs, and rings of bullets from the hangar
+        {68, {BossAttack::Rain, BossAttack::Ring, BossAttack::Rain, BossAttack::Burst}, 4, {0}, 0, Pen()},
+        // the Paragon, Rook's fighter: fast aimed bursts and a long beam
+        {84, {BossAttack::Burst, BossAttack::Beam, BossAttack::Fan}, 3, {0}, 1, Pen(120, 220, 255)},
+        // the Prism, the jammer: spirals and rings of signal
+        {86, {BossAttack::Spiral, BossAttack::Ring, BossAttack::Spiral, BossAttack::Beam}, 4, {0}, 1, Pen(255, 110, 230)},
+        // the Bulwark: everything, with a beam from each hull
+        {88, {BossAttack::Beam, BossAttack::Fan, BossAttack::Spiral, BossAttack::Rain}, 4, {-9, 9}, 2, Pen(255, 70, 40)},
+    };
+
+    const BossPreset &preset(int level) { return BOSSES[(level - 1) % 6]; }
 }
 
 int Boss::sprite_index() const {
-    return BOSS_SPRITES[(level - 1) % 6];
+    return preset(level).sprite;
 }
 
 void Boss::spawn(int lvl) {
@@ -192,13 +219,73 @@ void Boss::spawn(int lvl) {
     position = Vec2(SCREEN_W / 2, -16);
     age = 0;
     attack_timer = 600;
-    attack = 0;
+    attack = preset(level).attack_count - 1;  // the first attack is the first in the list
     shots_left = 0;
     flash_ms = 0;
+    beam_ms = 0;
     spiral_angle = 0;
+    move_s = 0;
     dying = false;
     dying_ms = 0;
     active = true;
+}
+
+void Boss::start_attack(BossAttack a, bool enraged) {
+    int l = std::min(level, 3);
+    switch (a) {
+        case BossAttack::Fan: shots_left = enraged ? 3 : 2; break;
+        case BossAttack::Burst: shots_left = (enraged ? 6 : 4) + l; break;
+        case BossAttack::Spiral: shots_left = (enraged ? 24 : 16) + 4 * l; break;
+        case BossAttack::Ring: shots_left = enraged ? 4 : 3; break;
+        case BossAttack::Rain: shots_left = (enraged ? 16 : 11) + 2 * l; break;
+        case BossAttack::Beam:
+            shots_left = 1;
+            beam_ms = BEAM_CHARGE_MS + BEAM_FIRE_MS;
+            audio::play(audio::Sfx::BeamCharge);
+            break;
+    }
+}
+
+void Boss::fire(BossAttack a, Vec2 player_pos, bool enraged) {
+    auto &pm = ProjectileManager::get_instance();
+    Vec2 muzzle = position + Vec2(0, 7);
+    float bullet_speed = 0.045f * (1.0f + 0.08f * (level - 1));
+    switch (a) {
+        case BossAttack::Fan: {
+            int n = std::min(5 + level + (enraged ? 2 : 0), 11);
+            float offset = (shots_left % 2) ? 0.1f : -0.1f;
+            for (int i = 0; i < n; i++) {
+                float angle = PI_F - 0.9f + 1.8f * i / (n - 1) + offset;
+                pm.fire(muzzle, bullet_speed, angle, 9, Faction::ENEMY, 1, 2.5f);
+            }
+            attack_timer = 420;
+            break;
+        }
+        case BossAttack::Burst:  // aimed, from alternating cannons
+            pm.fire_at(position + Vec2((shots_left % 2) ? -6 : 6, 5), player_pos, bullet_speed * 1.5f, 12);
+            attack_timer = 110;
+            break;
+        case BossAttack::Spiral:  // twin spiral
+            spiral_angle += 0.45f;
+            pm.fire(muzzle, bullet_speed, spiral_angle, 21, Faction::ENEMY);
+            pm.fire(muzzle, bullet_speed, spiral_angle + PI_F, 21, Faction::ENEMY);
+            attack_timer = 80;
+            break;
+        case BossAttack::Ring: {  // a full circle, every other one turned half a gap
+            int n = enraged ? 16 : 12;
+            float turn = (shots_left % 2) ? PI_F / n : 0;
+            for (int i = 0; i < n; i++) pm.fire(position, bullet_speed * 0.9f, turn + 2 * PI_F * i / n, 14, Faction::ENEMY);
+            attack_timer = 520;
+            break;
+        }
+        case BossAttack::Rain:  // eggs dropped from under the wings
+            pm.fire(position + Vec2(frand(-10, 10), 6), bullet_speed * frand(0.7f, 1.0f), PI_F + frand(-0.25f, 0.25f), 9,
+                    Faction::ENEMY, 1, 2.5f);
+            attack_timer = enraged ? 90 : 130;
+            break;
+        case BossAttack::Beam:
+            break;  // handled in update
+    }
 }
 
 void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
@@ -227,52 +314,51 @@ void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
 
     bool enraged = health * 2 < max_health;
     float pace = 1.0f + 0.12f * (level - 1) + (enraged ? 0.35f : 0.0f);
-    float tm = t - 2.2f;
-    position = Vec2(SCREEN_W / 2 + sinf(tm * 0.7f * pace) * 38, BOSS_Y + sinf(tm * 1.3f) * 5);
+
+    if (beam_ms > 0) {
+        // hold still and fire
+        bool was_charging = !beam_firing();
+        beam_ms -= dt;
+        if (was_charging && beam_firing()) {
+            audio::play(audio::Sfx::Beam);
+            fx::shake(2);
+        }
+        if (beam_ms <= 0) {
+            beam_ms = 0;
+            shots_left = 0;
+            attack_timer = enraged ? 650 : 1000;
+        }
+        return;
+    }
+
+    move_s += dt / 1000.0f;
+    position = Vec2(SCREEN_W / 2 + sinf(move_s * 0.7f * pace) * 38, BOSS_Y + sinf(t * 1.3f) * 5);
 
     if (!player_alive) return;
     attack_timer -= (int32_t)(dt * pace);
     if (attack_timer > 0) return;
 
-    auto &pm = ProjectileManager::get_instance();
-    Vec2 muzzle = position + Vec2(0, 7);
-    float bullet_speed = 0.045f * (1.0f + 0.08f * (level - 1));
-
+    const BossPreset &p = preset(level);
     if (shots_left == 0) {
-        // start the next attack in the cycle
-        attack = (attack + 1) % 3;
-        switch (attack) {
-            case 0: shots_left = enraged ? 3 : 2; break;
-            case 1: shots_left = (enraged ? 6 : 4) + std::min(level, 3); break;
-            case 2: shots_left = (enraged ? 24 : 16) + 4 * std::min(level, 3); break;
-        }
+        // start the next attack in this boss's list
+        attack = (attack + 1) % p.attack_count;
+        start_attack(p.attacks[attack], enraged);
+        if (beam_ms > 0) return;
     }
 
-    switch (attack) {
-        case 0: {  // fan
-            int n = std::min(5 + level + (enraged ? 2 : 0), 11);
-            float offset = (shots_left % 2) ? 0.1f : -0.1f;
-            for (int i = 0; i < n; i++) {
-                float a = PI_F - 0.9f + 1.8f * i / (n - 1) + offset;
-                pm.fire(muzzle, bullet_speed, a, 9, Faction::ENEMY, 1, 2.5f);
-            }
-            attack_timer = 420;
-            break;
-        }
-        case 1:  // aimed burst from alternating cannons
-            pm.fire_at(position + Vec2((shots_left % 2) ? -6 : 6, 5), player_pos, bullet_speed * 1.5f, 12);
-            attack_timer = 110;
-            break;
-        case 2:  // twin spiral
-            spiral_angle += 0.45f;
-            pm.fire(muzzle, bullet_speed, spiral_angle, 21, Faction::ENEMY);
-            pm.fire(muzzle, bullet_speed, spiral_angle + PI_F, 21, Faction::ENEMY);
-            attack_timer = 80;
-            break;
-    }
-
+    fire(p.attacks[attack], player_pos, enraged);
     shots_left--;
     if (shots_left == 0) attack_timer = enraged ? 650 : 1000;
+}
+
+bool Boss::beam_hits(const Rect &r) const {
+    if (!active || dying || !beam_firing()) return false;
+    const BossPreset &p = preset(level);
+    for (int i = 0; i < p.beam_count; i++) {
+        float x = position.x + p.beams[i];
+        if (r.x <= x + BEAM_HALF_W && r.x + r.w >= x - BEAM_HALF_W && r.y + r.h >= position.y) return true;
+    }
+    return false;
 }
 
 bool Boss::take_damage(int amount) {
@@ -283,17 +369,45 @@ bool Boss::take_damage(int amount) {
         health = 0;
         dying = true;
         dying_ms = BOSS_DEATH_MS;
+        beam_ms = 0;
         return true;
     }
     return false;
 }
 
-void Boss::draw() {
+void Boss::draw(uint32_t time) {
     if (!active) return;
     if (dying && (dying_ms / 70) % 2 == 0) {
         draw_sprite_flash(sheets.ships, sprite_index(), position, Size(2, 2), Pen(255, 220, 120));
         return;
     }
+
+    if (beam_ms > 0 && !dying) {
+        const BossPreset &p = preset(level);
+        Point o = fx::offset();
+        for (int i = 0; i < p.beam_count; i++) {
+            int x = (int)position.x + p.beams[i] + o.x;
+            int top = (int)position.y + 6 + o.y;
+            if (!beam_firing()) {
+                // charging: a thin flickering line and a growing glow at the muzzle
+                float k = 1.0f - (float)(beam_ms - BEAM_FIRE_MS) / BEAM_CHARGE_MS;
+                if ((time / 50) % 2) {
+                    screen.pen = Pen(p.beam.r, p.beam.g, p.beam.b, 90 + (int)(100 * k));
+                    screen.v_span(Point(x, top), SCREEN_H - top);
+                }
+                screen.pen = Pen(255, 255, 255, 120 + (int)(120 * k));
+                screen.circle(Point(x, top), 1 + (int)(2 * k));
+            } else {
+                int w = BEAM_HALF_W + (int)((time / 40) % 2);
+                screen.pen = Pen(p.beam.r, p.beam.g, p.beam.b, 170);
+                screen.rectangle(Rect(x - w, top, w * 2 + 1, SCREEN_H - top));
+                screen.pen = Pen(255, 255, 255);
+                screen.rectangle(Rect(x - 1, top, 3, SCREEN_H - top));
+                screen.circle(Point(x, top), 3);
+            }
+        }
+    }
+
     if (flash_ms > 0) draw_sprite_flash(sheets.ships, sprite_index(), position, Size(2, 2));
     else draw_sprite(sheets.ships, sprite_index(), position, Size(2, 2));
 }
