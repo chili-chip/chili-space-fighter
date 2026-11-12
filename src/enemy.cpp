@@ -436,7 +436,7 @@ void Boss::start_dash(Vec2 player_pos) {
 void Boss::update_dash(uint32_t dt) {
     dash_ms -= dt;
     if (dash_warning()) return;  // shakes in place, see draw
-    float k = 1.0f - std::max(0, dash_ms) / (float)DASH_MOVE_MS;
+    float k = 1.0f - std::max<int32_t>(0, dash_ms) / (float)DASH_MOVE_MS;
     k = k * k * (3 - 2 * k);  // ease in and out
     position.x = lerpf(dash_from, dash_to, k);
     if (dash_ms <= 0) {
