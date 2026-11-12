@@ -161,7 +161,7 @@ real `minimal_font` character widths.
 | --- | --- |
 | ![Play menu](img/game-modes.png) | **PLAY menu.** STORY plays Open Sky; ENDLESS is the arcade game with high scores. |
 | ![Title card](img/game-title-card.png) | **Title card.** The intro opens as the show. `(title card: ...)` in the script; `TURBO` is drawn as the logo. |
-| ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The text appears letter by letter while the face talks (it goes round all five of its frames and bobs) and a voice blips. When the page is shown the face rests on the frame the script asks for. The arrow means A goes on. |
+| ![Dialogue box](img/game-dialogue.png) | **Dialogue box.** Face at 2x, name, three lines. The text appears letter by letter while the face talks (it goes round all five of its frames and bobs) and a voice blips. When the page is shown the face rests on the frame the script asks for, with the mouth closed: a talking or shouting frame becomes the closest closed one. The arrow means A goes on. |
 | ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
 | ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
 | ![Comms static](img/game-static.png) | **Comms static.** When someone new starts talking, and when the last speaker signs off, the avatar box shows snow and the name scrambles in (or out) letter by letter for 0.4 s, with a crackle. |
@@ -192,7 +192,8 @@ real `minimal_font` character widths.
   a player still mashing fire does not skip it unread.
 - Each character has their own voice: a short square-wave blip at their own pitch every other
   letter (the Static crackles). While the text appears the face goes round its five frames
-  (`face_frame()` in `src/story.cpp`), then rests on the frame from the script.
+  (`face_frame()` in `src/story.cpp`), then rests on the frame from the script with the mouth
+  closed (`REST` in the same file maps each talking or shouting frame to a closed one).
 - While a scene is open the ship flies itself to the middle of the screen, above the text box, and
   does not fire. In chapter 1 Rook's Crimson flies next to it, and in chapter 2 Juno's Sunset from
   her meeting on. MENU still pauses.

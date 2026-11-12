@@ -12,9 +12,27 @@ namespace {
     constexpr int32_t STATIC_MS = 420;        // comms crackle when someone joins or the scene ends
     constexpr int FRAMES = 5;                 // portrait frames per character
 
-    // while the text appears the face goes round all its frames, then rests on the speech's own frame
+    // the frame a face rests on when it stops talking: open mouth frames (talking, shouting) become the
+    // closest closed one, see docs/story/characters.md. Rows: Brask, AUX-7, Rook, Zix, Juno, Wisp, Ossa,
+    // Lumo, Nova, Doc.
+    const int8_t REST[10][FRAMES] = {
+        {0, 0, 2, 2, 4},  // talking -> neutral, shouting -> frown
+        {0, 1, 2, 3, 4},
+        {0, 0, 2, 3, 4},
+        {0, 0, 0, 3, 4},  // talking, laughing -> neutral
+        {0, 0, 2, 3, 4},
+        {0, 1, 2, 1, 4},  // bright -> glowing
+        {0, 0, 4, 3, 4},  // shouting -> stern
+        {0, 1, 2, 3, 4},
+        {0, 0, 2, 3, 4},  // shout -> smile
+        {0, 1, 2, 0, 4},
+    };
+
+    // while the text appears the face goes round all its frames, then rests on the speech's own frame,
+    // with the mouth closed
     int face_frame(const Speech &sp, bool talking, uint32_t shown_ms) {
-        return talking ? (sp.frame + 1 + (int)(shown_ms / MOUTH_MS)) % FRAMES : sp.frame;
+        if (talking) return (sp.frame + 1 + (int)(shown_ms / MOUTH_MS)) % FRAMES;
+        return sp.row >= 0 && sp.row < 10 ? REST[sp.row][sp.frame] : sp.frame;
     }
 
     void draw_face(const Speech &sp, int frame, const Rect &face) {
