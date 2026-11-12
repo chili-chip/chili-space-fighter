@@ -117,8 +117,8 @@ constexpr int TITLE_COUNT = 5;
 
 const char *const MODE_ITEMS[] = {"STORY", "ENDLESS", "BACK"};
 
-void start_game(World::Mode mode, int chapter = 1) {
-    world.start(save_data.ship, &stars, mode, chapter);
+void start_game(World::Mode mode, int chapter = 1, bool retry = false) {
+    world.start(save_data.ship, &stars, mode, chapter, retry);
     go(State::Playing);
 }
 
@@ -406,7 +406,7 @@ void update_game_over() {
     }
     if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
-        start_game(world.mode, world.chapter());  // story mode retries the chapter
+        start_game(world.mode, world.chapter(), true);  // story mode retries the chapter
     } else if (just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title);

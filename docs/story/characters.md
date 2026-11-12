@@ -43,7 +43,9 @@ watching the show and believed every episode. Nova is brave and a bit naive, and
 Frames: 0 to 3 the eye looks around (0 centre, 1 up, 2 right, 3 left), 4 screen off (thinking).
 
 The computer in Nova's fighter, issued by the Concord. Polite, exact and quietly funny. It is the one
-that scans the "mothership" in chapter 1 and finds the truth.
+that scans the "mothership" in chapter 1 and finds the truth. When the ship loses a life, AUX-7
+puts out the fire and fixes the hull, and says so in a small box under the score (the `repairs`
+lines in the script).
 
 - **Wants:** at first, nothing. It follows orders.
 - **Arc (freedom):** in chapter 5 the Prism sends a Concord override to every ship computer. AUX-7
@@ -63,6 +65,7 @@ TURBO wing lead, the face of the show. Nobody has seen Rook without the red helm
 pilot and a true believer: the Concord took Rook out of a hard life and gave a uniform and a name.
 
 - **Wants:** order, and to deserve the uniform.
+- In chapter 1 Rook's Crimson flies on Nova's wing.
 - **Arc (acceptance, redemption):** Rook hunts Nova in chapter 4 in the Paragon and loses. Doc
   treats Rook. Rook expects a cell and gets an open door instead. In chapter 6 Rook flies the
   Crimson fighter at Nova's side.
@@ -109,6 +112,8 @@ fighter bought for scrap after its pilot quit, and smuggles Outlander families p
 scanner Juno never took off.
 
 - **Wants:** to get people out. Nothing else.
+- Juno meets Nova on the fourth wave of chapter 2, after Nova has run from Halo with Wardens close
+  behind. From then on the Sunset flies on Nova's wing.
 - **Arc (acceptance):** Juno does not trust a Concord pilot, and says so. By the end of chapter 2
   Nova has earned a little trust. By chapter 6 they are friends.
 - **Voice:** blunt, dry, tired. Short on patience, long on sarcasm. Warms up slowly and never says so out loud.

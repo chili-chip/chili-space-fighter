@@ -29,8 +29,9 @@ SPEAKERS = {
 STATIC_ROW = 10
 CARD_ROW = -1          # a full screen card (title card, chapter card), no face
 CHAPTERS = 6
-CHAPTER_SCENES = ['card', 'start', 'radio', 'boss_warning', 'after_boss', 'game_over']
+CHAPTER_SCENES = ['card', 'start', 'meeting', 'radio', 'boss_warning', 'after_boss', 'game_over']
 HEADINGS = {
+    'meeting': 'meeting',
     'radio': 'radio',
     'boss warning': 'boss_warning',
     'after the boss': 'after_boss',
@@ -97,7 +98,7 @@ def parse_block(lines):
 
 
 def parse(md):
-    """script.md -> {'intro': [...], 'chapters': [{scene: [...]}], 'ending': [...], 'free_lanes': [...], ...}"""
+    """script.md -> {'intro': [...], 'chapters': [{scene: [...]}], 'ending': [...], 'repairs': [...], ...}"""
     story = {'chapters': [{} for _ in range(CHAPTERS)]}
     section = sub = None
     block = None
@@ -131,6 +132,8 @@ def store(story, section, sub, lineno, speeches, raw):
         story['intro'] = speeches
     elif section == 'ending':
         story['ending'] = speeches
+    elif section == 'repairs':
+        story['repairs'] = speeches
     elif section == 'free lanes':
         story['free_lanes_game_over' if sub else 'free_lanes'] = speeches
     elif isinstance(section, int) and 1 <= section <= CHAPTERS:
@@ -172,7 +175,7 @@ def emit(story):
     def scene(name):
         return f'{{{name}, {arrays[name]}}}' if name in arrays else '{nullptr, 0}'
 
-    for key in ('intro', 'ending', 'free_lanes', 'free_lanes_game_over'):
+    for key in ('intro', 'ending', 'free_lanes', 'free_lanes_game_over', 'repairs'):
         if story.get(key):
             array(f'{key}_lines', story[key])
     for i, ch in enumerate(story['chapters'], 1):
@@ -180,7 +183,7 @@ def emit(story):
             if ch.get(key):
                 array(f'ch{i}_{key}', ch[key])
     out += ['}  // namespace', '']
-    for key in ('intro', 'ending', 'free_lanes', 'free_lanes_game_over'):
+    for key in ('intro', 'ending', 'free_lanes', 'free_lanes_game_over', 'repairs'):
         out.append(f'const Scene {key} = {scene(f"{key}_lines")};')
     out += ['', f'const Chapter chapters[{CHAPTERS}] = {{']
     for i, ch in enumerate(story['chapters'], 1):

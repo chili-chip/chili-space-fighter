@@ -3,7 +3,7 @@
 #include "common.hpp"
 
 // Three-layer parallax starfield scrolling down the screen, with a look for each story chapter:
-// lane beacons at Halo, gate rings at the Tollgate, rocks in the Rust Ring, gas in the Drift,
+// lane beacons at Halo, warning lights at the Tollgate, rocks in the Rust Ring, gas in the Drift,
 // crystals over Glimmer and alarm lights at Halo in lockdown. See docs/story/backgrounds.md.
 class Starfield {
 public:
@@ -20,7 +20,7 @@ private:
     static constexpr int STAR_COUNT = 56;
     static constexpr int PROP_COUNT = 7;
     struct Star { float x, y; uint8_t layer; };
-    // something bigger than a star drifting past: a rock, a ring, a crystal or a gas cloud
+    // something bigger than a star drifting past: a rock, a crystal or a gas cloud
     struct Prop { float x, y, speed; uint8_t kind; uint8_t seed; };
 
     Star stars[STAR_COUNT];

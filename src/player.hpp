@@ -6,7 +6,8 @@ class Player {
 public:
     static constexpr int MAX_HULL = 3;
     static constexpr int MAX_WEAPON = 4;
-    static constexpr uint32_t RESPAWN_MS = 1800;
+    static constexpr int MAX_SHIELDS = 3;
+    static constexpr int32_t REPAIR_MS = 2500;
 
     Vec2 position;
     Vec2 velocity;
@@ -15,8 +16,9 @@ public:
     int weapon = 1;
     int32_t rapid_ms = 0;
     int32_t shield_ms = 0;
+    int shields = 0;         // shield layers, each hit pops one
     int32_t invuln_ms = 0;
-    int32_t respawn_ms = 0;  // > 0 while waiting to respawn after losing a life
+    int32_t repair_ms = 0;   // > 0 while the ship burns after losing a life: no hits, no fire, half speed
     int32_t fire_cooldown = 0;
     uint8_t color = 0;       // ship colour variant 0..4
     bool alive = true;
@@ -30,24 +32,26 @@ public:
 
     // returns true if the hit cost the last life
     bool hit();
-    bool can_be_hit() const { return alive && invuln_ms <= 0; }
-    bool shielded() const { return shield_ms > 0; }
+    void add_shield();
+    bool can_be_hit() const { return alive && invuln_ms <= 0 && repair_ms <= 0; }
+    bool shielded() const { return shields > 0; }
+    bool repairing() const { return repair_ms > 0; }
     Rect get_hitbox() const { return Rect(position.x - 2, position.y - 2, 5, 5); }
 
 private:
     void fire();
-    void spawn();
     uint32_t anim_time = 0;
 };
 
-// A friendly fighter on the player's wing (Juno's Sunset in chapter 2). It can't be hit, and fires
-// when the player fires.
+// A friendly fighter on the player's wing (Rook's Crimson in chapter 1, Juno's Sunset in chapter 2).
+// It can't be hit, and fires when the player fires.
 class Wingman {
 public:
     Vec2 position;
+    int sprite = 0;  // centre frame in assets/ships.png, tilt frames are -1 / +1
     bool active = false;
 
-    void join();   // flies in from below
+    void join(int sprite);  // flies in from below
     void leave();  // flies off the top of the screen
     void update(uint32_t dt, const Player &player);
     void draw(uint32_t time);

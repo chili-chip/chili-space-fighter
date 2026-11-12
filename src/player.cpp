@@ -10,8 +10,8 @@ namespace {
     constexpr int32_t RAPID_FIRE_MS = 80;
     constexpr int BULLET_SPRITE = 2;
     const int SHIP_SPRITE[5] = {1, 11, 21, 31, 41};  // centre frame, tilt frames are -1 / +1
-    constexpr int WINGMAN_SPRITE = 11;               // the Sunset
     constexpr float WING_GAP = 14;                   // px between the player and the wingman
+    const int FLAME_FRAMES[4] = {44, 45, 46, 47};    // fire on a burning ship, in assets/misc.png
 }
 
 void draw_flame(Vec2 ship, float tilt, bool thrust, uint32_t time) {
@@ -31,12 +31,9 @@ void Player::reset(uint8_t ship_color) {
     weapon = 1;
     rapid_ms = 0;
     shield_ms = 0;
-    respawn_ms = 0;
+    shields = 0;
+    repair_ms = 0;
     controls_enabled = true;
-    spawn();
-}
-
-void Player::spawn() {
     position = Vec2(SCREEN_W / 2, SCREEN_H - 14);
     velocity = Vec2(0, 0);
     hull = MAX_HULL;
@@ -45,10 +42,15 @@ void Player::spawn() {
     alive = true;
 }
 
+void Player::add_shield() {
+    shields = std::min(shields + 1, MAX_SHIELDS);
+    shield_ms = 10000;
+}
+
 bool Player::hit() {
     if (shielded()) {
-        // the shield soaks the hit and pops
-        shield_ms = 0;
+        // the outer shield layer soaks the hit and pops
+        shields--;
         invuln_ms = 600;
         audio::play(audio::Sfx::Shield);
         fx::particles(position, Pen(120, 230, 255), 16, 0.06f);
@@ -65,11 +67,20 @@ bool Player::hit() {
         return false;
     }
 
-    // ship destroyed
-    alive = false;
     lives--;
     weapon = std::max(1, weapon - 1);
     rapid_ms = 0;
+    if (lives > 0) {
+        // the ship catches fire while the ship computer repairs it
+        repair_ms = REPAIR_MS;
+        audio::play(audio::Sfx::PlayerDie);
+        fx::explosion(position, fx::Boom::Spark);
+        fx::particles(position, Pen(255, 160, 60), 20, 0.07f, 600);
+        return false;
+    }
+
+    // the last life: the ship is destroyed
+    alive = false;
     audio::play(audio::Sfx::PlayerDie);
     fx::shake(6);
     fx::explosion(position, fx::Boom::Big);
@@ -77,8 +88,7 @@ bool Player::hit() {
     fx::explosion(position + Vec2(5, -2), fx::Boom::Small, 300);
     fx::particles(position, Pen(255, 200, 80), 30, 0.08f, 700);
     fx::particles(position, Pen(255, 255, 255), 12, 0.10f, 500);
-    respawn_ms = lives > 0 ? RESPAWN_MS : 0;
-    return lives <= 0;
+    return true;
 }
 
 void Player::fire() {
@@ -115,15 +125,23 @@ void Player::update(uint32_t dt) {
     anim_time += dt;
     if (rapid_ms > 0) rapid_ms -= dt;
     if (shield_ms > 0) shield_ms -= dt;
+    if (shield_ms <= 0) shields = 0;
     if (invuln_ms > 0) invuln_ms -= dt;
     if (fire_cooldown > 0) fire_cooldown -= dt;
+    if (!alive) return;
 
-    if (!alive) {
-        if (respawn_ms > 0) {
-            respawn_ms -= dt;
-            if (respawn_ms <= 0) spawn();
+    if (repair_ms > 0) {
+        repair_ms -= dt;
+        // the hull pips fill up as the repair goes
+        hull = std::min(MAX_HULL, (int)((REPAIR_MS - repair_ms) * (MAX_HULL + 1) / REPAIR_MS));
+        if ((anim_time / 90) != ((anim_time - dt) / 90)) {
+            fx::particles(position + Vec2(frand(-2, 2), 0), Pen(110, 100, 110), 1, 0.02f, 500);  // smoke
         }
-        return;
+        if (repair_ms <= 0) {
+            repair_ms = 0;
+            hull = MAX_HULL;
+            invuln_ms = 2000;
+        }
     }
 
     Vec2 move(0, 0);
@@ -143,12 +161,12 @@ void Player::update(uint32_t dt) {
     }
     if (move.length() > 1.0f) move.normalize();
 
-    velocity = move * SPEED;
+    velocity = move * (repairing() ? SPEED / 2 : SPEED);
     position += velocity * (float)dt;
     position.x = clampf(position.x, 4, SCREEN_W - 4);
     position.y = clampf(position.y, HUD_H + 6, SCREEN_H - 5);
 
-    if (controls_enabled && !autopilot && (buttons & Button::A) && fire_cooldown <= 0) {
+    if (controls_enabled && !autopilot && !repairing() && (buttons & Button::A) && fire_cooldown <= 0) {
         fire();
         fire_cooldown = rapid_ms > 0 ? RAPID_FIRE_MS : FIRE_MS;
     }
@@ -165,22 +183,30 @@ void Player::draw(uint32_t time) {
 
     draw_flame(position, velocity.x, velocity.y < -0.01f, anim_time);
     draw_sprite(sheets.ships, sprite, position);
+    if (repairing()) {
+        // on fire: a flickering flame on the hull
+        draw_sprite(sheets.misc, FLAME_FRAMES[(anim_time / 70) % 4], position + Vec2(1, -2));
+    }
 
     if (shielded()) {
-        // pulsing bubble, flickers when about to run out
+        // one pulsing bubble per layer, flickers when about to run out
         if (shield_ms > 1500 || (shield_ms / 100) % 2 == 0) {
-            float r = 7.5f + sinf(time * 0.012f) * 0.8f;
             Point c = Point(position) + fx::offset();
-            for (int i = 0; i < 28; i++) {
-                float a = i * (2 * PI_F / 28);
-                screen.pen = (i + time / 60) % 4 == 0 ? Pen(255, 255, 255) : Pen(100, 220, 255, 200);
-                screen.pixel(c + Point((int)roundf(cosf(a) * r), (int)roundf(sinf(a) * r)));
+            for (int layer = 0; layer < shields; layer++) {
+                float r = 7.5f + layer * 2.5f + sinf(time * 0.012f + layer) * 0.8f;
+                int dots = 28 + layer * 8;
+                for (int i = 0; i < dots; i++) {
+                    float a = i * (2 * PI_F / dots);
+                    screen.pen = (i + time / 60) % 4 == 0 ? Pen(255, 255, 255) : Pen(100, 220, 255, 200);
+                    screen.pixel(c + Point((int)roundf(cosf(a) * r), (int)roundf(sinf(a) * r)));
+                }
             }
         }
     }
 }
 
-void Wingman::join() {
+void Wingman::join(int ship) {
+    sprite = ship;
     active = true;
     leaving = false;
     side = 1;
@@ -220,7 +246,7 @@ void Wingman::update(uint32_t dt, const Player &player) {
 void Wingman::draw(uint32_t time) {
     if (!active) return;
     float tilt = std::abs(velocity.x) > 0.02f ? velocity.x : 0;
-    int sprite = WINGMAN_SPRITE + (tilt < 0 ? -1 : (tilt > 0 ? 1 : 0));
+    int frame = sprite + (tilt < 0 ? -1 : (tilt > 0 ? 1 : 0));
     draw_flame(position, tilt, velocity.y < -0.01f, anim_time);
-    draw_sprite(sheets.ships, sprite, position);
+    draw_sprite(sheets.ships, frame, position);
 }

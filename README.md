@@ -12,17 +12,26 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 
 - Two modes: **Story** (six chapters with a boss each and a cast of ten, told between waves) and
   **Endless** (waves forever, for the high score table)
-- Endless numbered waves built from enemy formations: dives, zig-zags, swoops, loops, side sweeps
-  and squadrons that hover in formation before diving at you
+- Endless numbered waves built from enemy formations: dives, zig-zags, swoops, loops, side sweeps,
+  squadrons that hover in formation before diving at you, and from wave 5 on figures of eight,
+  V formations that dive at you, and rows that strafe side to side and stop to fire
 - Five enemy types with their own fire patterns, getting faster and tougher every wave
 - A boss every tenth wave, each with its own attacks (fans, aimed bursts, spirals, rings, egg rain and
-  beams) and an enraged second phase
-- Power-ups: weapon level (twin, spread, quad, max), rapid fire, shield, repair, extra life and bonus coins
+  beams) and an enraged second phase. Between attacks a boss may shake, flash and dash over your
+  column, more often when enraged
+- Power-ups: weapon level (twin, spread, quad, max), rapid fire, shield, repair, extra life and bonus coins.
+  Shields stack up to 3 layers: each hit pops one, and the HUD shows the count next to the S
+- Losing a life does not destroy the ship (only the last one does). It catches fire for 2.5 s: no
+  hits, no firing, half speed, while the ship computer repairs it and the hull fills up again
 - Combo multiplier for chaining kills, no-hit wave bonus, extra life every 10,000 points
 - Top-5 high score table with three-letter names, saved on the device
 - Six music tracks that change with the situation (title, two stage themes, boss, story scenes,
   ending), converted from public domain tracker songs into note sheets for the built-in chiptune player
 - Five ship colours to pick from in Options; music and sound can be switched off separately
+
+| ![Repairs](docs/story/img/game-repair.png) | ![Shields](docs/story/img/game-shields.png) |
+| --- | --- |
+| A life lost: the ship burns while the ship computer fixes it | Three shield layers, `S3` in the HUD |
 
 ## Story
 
@@ -30,6 +39,19 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 with its own background, then the ending. Each speech appears letter by letter while the speaker's face talks and blips. A shows the
 whole page, then the next one; B skips a scene. After a game over, A retries the chapter. Story runs
 do not go in the high score table; **PLAY > ENDLESS** is the arcade game with high scores.
+
+Story mode adjusts to the player like a rubber band. One difficulty number scales enemy fire rate
+and speed and the boss's pace. Endless mode does not use it.
+
+| | Difficulty |
+| --- | --- |
+| Start of a story run | 1.0 |
+| A life lost | -0.1 |
+| A chapter retried after a game over | -0.1 |
+| A wave or boss cleared without a hit | +0.05 |
+| Lowest / highest | 0.7 / 1.15 |
+
+See [Difficulty](docs/story/index.md#difficulty) for more.
 
 The world, the cast from `assets/characters.png`, the ships and the full script are in
 [docs/story](docs/story/index.md). The dialogue lives only in
@@ -92,9 +114,9 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 | File | What it does |
 | --- | --- |
 | `src/game.cpp` | 32blit entry points, title screen, menus, pause, game over and name entry |
-| `src/world.cpp` | One run: wave schedule, collisions, scoring, HUD, banners and when story scenes play |
-| `src/story.cpp` | Story text box: wrapping, sentence-aware pages, portraits, comms static and title cards |
-| `src/player.cpp` | Player ship, weapons, hull, shield, respawn, the autopilot during scenes, and Juno's wing ship |
+| `src/world.cpp` | One run: wave schedule, collisions, scoring, HUD, banners, story difficulty, the convoy and when story scenes play |
+| `src/story.cpp` | Story text box: wrapping, sentence-aware pages, portraits, comms static and title cards; the small repair comms box |
+| `src/player.cpp` | Player ship, weapons, hull, stacked shields, the repair after a lost life, the autopilot during scenes, and the wingman (Rook, then Juno) |
 | `src/enemy.cpp` | Enemy types, movement patterns and the six bosses with their attacks (including beams) |
 | `src/powerup.cpp` | Power-up drops |
 | `src/projectile_manager.cpp` | Bullet pool |

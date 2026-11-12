@@ -7,6 +7,10 @@ as normal text. The game wraps the text and shows it three lines at a time, endi
 of a sentence (or after a comma when a sentence is too long for one page). `[STATIC]` has no face.
 Lines in `( )` are directions.
 
+A chapter can also have a `### Meeting` scene (hook `meeting`). It plays at the start of the fourth
+wave of the chapter, before the radio scene on the fifth. Only chapter 2 has one, where Juno meets
+Nova.
+
 Names in boxes: `NOVA`, `AUX-7` (becomes `KIT` in chapter 5), `ROOK`, `BRASK`, `LUMO`, `JUNO`,
 `ZIX`, `OSSA`, `DOC`, `WISP`.
 
@@ -67,7 +71,7 @@ Hook: `radio`, wave 5. The Static breaks in for the first time.
 ...zzt... is this thing... zzt... Halo, can you hear me?
 
 [LUMO 2]
-There we go! Good evening, Halo. This is Lumo, and you're listening to the Static, the only station that isn't trying to scare you.
+There we go! Good evening, Halo. This is Lumo, and you're listening to the Static, the only station that isn't feeding you propaganda.
 
 [LUMO 1]
 Quick question while I've got you. Has anyone out there ever actually met one of these evil aliens? We've been looking for ten years and we haven't found a single one.
@@ -94,16 +98,19 @@ Hook: `after_boss`, wave 10.
 We got it! Rook, did you see that? We actually took down the mothership!
 
 [AUX-7 2]
-Congratulations, Nova. I am scanning the wreck for survivors, as the rules require. One moment, please.
+Congratulations, Nova. I am scanning the wreck for survivors. One moment, please.
 
 [AUX-7 4]
-That is strange. There is no crew on board. There are no aliens at all. What I am finding is cameras, stage lights, and what appears to be a fog machine.
+That is strange. There is no crew on board, and there are no aliens at all. It is a drone carrier, flown by remote control.
 
 [NOVA 3]
-A fog machine? What would aliens want with a fog machine?
+Then who was flying it? Somebody had to be on the other end.
 
 [AUX-7 0]
-I don't think they are aliens, Nova. Every part has a Concord serial number. According to its own logs, this ship is called the Herald, and it was built on Halo.
+Every part has a Concord serial number. According to its flight recorder, this ship is called the Herald, and it was launched from Halo's own dock.
+
+[AUX-7 4]
+Its orders are signed by Marshal Brask's office. They even give tonight's episode number.
 
 [NOVA 3]
 But that would mean it's ours. That we were shooting at our own... AUX, that can't be right.
@@ -135,7 +142,8 @@ That was a bad episode, rookie. Shake it off and we'll shoot it again.
 
 ## Chapter 2: No Papers
 
-Waves 11 to 20. The Tollgate. Boss: the Tollgate. Juno's Sunset flies on Nova's wing all chapter.
+Waves 11 to 20. The Tollgate. Boss: the Tollgate. Nova runs from Halo with Wardens close behind,
+and meets Juno on the way. From then on Juno's Sunset flies on Nova's wing.
 
 ### Chapter card
 
@@ -145,11 +153,37 @@ NO PAPERS
 THE TOLLGATE
 ```
 
-Hook: `chapter_start`, before wave 41.
+Hook: `chapter_start`, before wave 11. The escape: no Juno yet.
+
+```text
+(Nova's ship races out of Halo's dock, with Wardens close behind)
+
+[AUX-7 4]
+Nova, Wardens are leaving the dock behind us. Twelve of them, and I do not think they are here to escort us.
+
+[BRASK 3]
+All Warden units, this is Marshal Brask. TURBO Five has stolen a Concord fighter. Bring that ship back to Halo.
+
+[NOVA 3]
+Stolen? He gave me this ship himself, on live television!
+
+[AUX-7 0]
+The Tollgate is at the end of this Lane, and Lumo's friend is waiting there. I suggest we hurry.
+
+[NOVA 2]
+Then hold on, AUX. Let's see how fast this thing really goes.
+```
+
+### Meeting
+
+Hook: `meeting`, before wave 14. Juno finds Nova in the Lane, and the Sunset joins Nova's wing.
 
 ```text
 [JUNO 3]
-So you're the one Lumo sent me. A Concord pilot, in a Concord ship, still wearing the white uniform. Lumo has a strange sense of humour.
+So you're the one Lumo sent me. You brought half the Wardens in the Lane with you.
+
+[JUNO 1]
+A Concord pilot, in a Concord ship, still wearing the white uniform. Lumo has a strange sense of humour.
 
 [NOVA 0]
 I'm Nova. I know how it looks, but I'm not with them any more. I came to help.
@@ -214,8 +248,8 @@ Huh. Maybe you're all right after all, white shirt. Come on. If you want to see 
 ### Game over
 
 ```text
-[JUNO 3]
-Get up, Nova! They're still right behind me and I can't hold them off on my own!
+[AUX-7 4]
+The Wardens have caught up with us, Nova. Shall we try that again?
 ```
 
 ## Chapter 3: The Yards
@@ -230,7 +264,7 @@ THE YARDS
 THE RUST RING
 ```
 
-Hook: `chapter_start`, before wave 41.
+Hook: `chapter_start`, before wave 21.
 
 ```text
 [JUNO 1]
@@ -370,7 +404,7 @@ There are no locks here, pilot. That is the door, and it opens from both sides. 
 I believed them. Every single episode. I thought I was keeping people safe. If the Swarm isn't real, then what have I been doing all these years?
 
 [NOVA 0]
-The same as me. I believed it too, right up until a fog machine fell out of a mothership.
+The same as me. I believed it too, right up until I read the Marshal's signature on a mothership.
 
 [OSSA 3]
 So did many of us, once. That is why the doors stay open, Rook. Rest. Decide tomorrow.
@@ -464,7 +498,7 @@ We're on! We're on every screen! Halo, can you hear me? It's Lumo, I'm real, and
 This is a scan from a TURBO pilot's own ship. It's the alien mothership from last week's episode. Have a good look at what's inside.
 
 [KIT 0]
-Sending the Herald scan to ten million screens. It is a very clear picture of the fog machine, if I may say so.
+Sending the Herald scan to ten million screens. The Marshal's signature is very easy to read, if I may say so.
 
 [BRASK 3]
 Lies! This is Swarm noise, citizens, nothing more! Stay inside your homes and wait for the regular programme to return!
@@ -591,6 +625,26 @@ No, we're keeping it. All of it. They used that name to sell a lie about monster
 We're going to use it for the truth: pilots who keep the Lanes open for everyone.
 
 (title card: ULTRA HYPER SPACE / SUPER FIGHTERS / TURBO. EPISODE 2: OPEN SKY)
+```
+
+## Repairs
+
+Hook: `repairs`. When a hit costs a life but not the last one, the ship catches fire for 2.5 s
+while the ship computer fixes it. One of these lines shows in a small box under the score, in turn.
+Up to two lines of text each (about 40 letters), in both modes.
+
+```text
+[AUX-7 4]
+We are on fire. I am fixing it. Hold on.
+
+[AUX-7 0]
+The hull is open. I am patching it now.
+
+[AUX-7 2]
+Putting out the fire. Please fly gently.
+
+[AUX-7 1]
+Repairs under way. Please avoid bullets.
 ```
 
 ## Free Lanes

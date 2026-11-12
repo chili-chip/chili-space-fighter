@@ -10,13 +10,30 @@ namespace {
     constexpr uint32_t CHAR_MS = 28;          // text speed
     constexpr uint32_t MOUTH_MS = 110;        // talking animation speed
     constexpr int32_t STATIC_MS = 420;        // comms crackle when someone joins or the scene ends
+    constexpr int FRAMES = 5;                 // portrait frames per character
 
-    // the frame each character's face opens its mouth with (see docs/story/characters.md)
-    int talk_frame(int row, int frame) {
-        static const int8_t TALK[11] = {1, -1, 1, 1, 1, 3, 1, 2, 1, 3, 0};
-        if (row == 1) return (frame + 1) % 4;  // AUX-7 / Kit: the eye moves
-        int t = TALK[row];
-        return t == frame ? 0 : t;
+    // while the text appears the face goes round all its frames, then rests on the speech's own frame
+    int face_frame(const Speech &sp, bool talking, uint32_t shown_ms) {
+        return talking ? (sp.frame + 1 + (int)(shown_ms / MOUTH_MS)) % FRAMES : sp.frame;
+    }
+
+    void draw_face(const Speech &sp, int frame, const Rect &face) {
+        screen.pen = Pen(90, 80, 200);
+        screen.rectangle(Rect(face.x - 1, face.y - 1, face.w + 2, face.h + 2));
+        screen.pen = Pen(20, 16, 50);
+        screen.rectangle(face);
+        screen.stretch_blit(sheets.characters, Rect(1 + frame * 8, sp.row * 8, 8, 8), face);
+    }
+
+    // snow in the avatar box
+    void draw_static(const Rect &face) {
+        for (int y = 0; y < face.h; y += 2) {
+            for (int x = 0; x < face.w; x += 2) {
+                uint8_t v = 30 + (blit::random() & 0xdf);
+                screen.pen = Pen(v, v, std::min(255, v + 30));
+                screen.rectangle(Rect(face.x + x, face.y + y, 2, 2));
+            }
+        }
     }
 
     // box along the bottom: 16x16 face on the left, name and three lines of text on the right
@@ -222,18 +239,13 @@ void Dialogue::draw(uint32_t time) {
     screen.rectangle(Rect(0, BOX_Y, SCREEN_W, SCREEN_H - BOX_Y));
     screen.pen = Pen(90, 80, 200);
     screen.h_span(Point(0, BOX_Y), SCREEN_W);
-    // face, drawn at 2x; it talks while the text appears. The Static's frame flickers through its five frames.
-    int frame = sp.frame;
-    bool mouth_open = talking() && (shown_ms / MOUTH_MS) % 2;
-    if (sp.row == STATIC_ROW) frame = (int)((time / 90) % 5);
-    else if (mouth_open) frame = talk_frame(sp.row, sp.frame);
-    Rect face(2, BOX_Y + 4 - (mouth_open ? 1 : 0), 16, 16);
-    screen.pen = Pen(90, 80, 200);
-    screen.rectangle(Rect(face.x - 1, face.y - 1, face.w + 2, face.h + 2));
-    screen.pen = Pen(20, 16, 50);
-    screen.rectangle(face);
+    // face, drawn at 2x; it talks (and bobs) while the text appears. The Static's frame flickers through its five frames.
+    int frame = face_frame(sp, talking(), shown_ms);
+    bool bob = talking() && (shown_ms / MOUTH_MS) % 2;
+    if (sp.row == STATIC_ROW) frame = (int)((time / 90) % FRAMES);
+    Rect face(2, BOX_Y + 4 - (bob ? 1 : 0), 16, 16);
+    draw_face(sp, frame, face);
     if (static_ms > 0) draw_static(face);
-    else screen.stretch_blit(sheets.characters, Rect(1 + frame * 8, sp.row * 8, 8, 8), face);
 
     int y = BOX_Y + 3;
     if (sp.name) {
@@ -273,14 +285,47 @@ void Dialogue::draw(uint32_t time) {
     }
 }
 
-void Dialogue::draw_static(const Rect &face) {
-    // snow in the avatar box
-    for (int y = 0; y < face.h; y += 2) {
-        for (int x = 0; x < face.w; x += 2) {
-            uint8_t v = 30 + (blit::random() & 0xdf);
-            screen.pen = Pen(v, v, std::min(255, v + 30));
-            screen.rectangle(Rect(face.x + x, face.y + y, 2, 2));
-        }
+void Comms::say(const Speech &sp, int32_t ms) {
+    speech = &sp;
+    lines = split_lines(screen.wrap_text(sp.text, TEXT_W, minimal_font));
+    lines.resize(std::min<size_t>(lines.size(), 2));
+    shown_ms = 0;
+    left_ms = ms;
+    revealed = 0;
+}
+
+int Comms::chars() const {
+    int n = 0;
+    for (auto &l : lines) n += l.size();
+    return n;
+}
+
+void Comms::update(uint32_t dt) {
+    if (!speech) return;
+    shown_ms += dt;
+    left_ms -= dt;
+    if (left_ms <= 0) {
+        speech = nullptr;
+        return;
+    }
+    int due = std::min(chars(), (int)(shown_ms / CHAR_MS));
+    if (due / 2 > revealed / 2) audio::talk(speech->row);
+    revealed = due;
+}
+
+void Comms::draw(int y) {
+    if (!speech) return;
+    screen.pen = Pen(6, 4, 30, 200);
+    screen.rectangle(Rect(0, y, SCREEN_W, 20));
+    screen.pen = Pen(90, 80, 200);
+    screen.h_span(Point(0, y + 20), SCREEN_W);
+    bool talking = revealed < chars();
+    draw_face(*speech, face_frame(*speech, talking, shown_ms), Rect(2, y + 2, 16, 16));
+    int left = revealed;
+    for (size_t i = 0; i < lines.size() && left > 0; i++) {
+        int n = std::min(left, (int)lines[i].size());
+        shadow_text(std::string_view(lines[i]).substr(0, n), minimal_font, Point(TEXT_X, y + 3 + i * LINE_H), Pen(230, 230, 245));
+        left -= n;
     }
 }
 
