@@ -72,6 +72,25 @@ edit the script and build. See [Changing the dialogue](docs/story/index.md#chang
 
 On desktop the keyboard maps to: arrows or WASD for the D-pad, `Z` for A, `X` for B and `Esc` or `2` for MENU.
 
+## Cheats
+
+Cheats make testing faster. On the title screen press **left, left, right, right, left, right,
+left, right, B** (on desktop: arrows, then `X`). A sound plays and the title shows CHEATS ON. The
+same code turns them off again. They last until the game is closed and are not saved.
+
+![Cheats on the title screen and in the pause menu](docs/story/img/game-cheats.png)
+
+With cheats on, the pause menu (MENU) has more items:
+
+| Item | What it does |
+| --- | --- |
+| GOD MODE | Nothing can hit you: bullets, beams and ramming do no damage. Stays on between runs |
+| SKIP WAVE | Destroys every enemy left in the wave, or the boss, as if you had shot them. The wave then clears as usual, with its story scene |
+| NEXT CHAPTER | Story mode only, chapters 1 to 5: starts the next chapter from its card |
+| MAX POWER | Weapon level 4, three shields, rapid fire, full hull and 9 lives |
+
+B still skips a story scene, so a whole chapter can be checked in a minute or two.
+
 ## Building
 
 You need the [chili-chip 32blit SDK](https://github.com/chili-chip/32blit-sdk) checked out next to this repository.
@@ -113,7 +132,7 @@ The web build is produced by CI with Emscripten and deployed from `main`.
 
 | File | What it does |
 | --- | --- |
-| `src/game.cpp` | 32blit entry points, title screen, menus, pause, game over and name entry |
+| `src/game.cpp` | 32blit entry points, title screen, menus, pause, cheats, game over and name entry |
 | `src/world.cpp` | One run: wave schedule, collisions, scoring, HUD, banners, story difficulty, the convoy and when story scenes play |
 | `src/story.cpp` | Story text box: wrapping, sentence-aware pages, portraits, comms static and title cards; the small repair comms box |
 | `src/player.cpp` | Player ship, weapons, hull, stacked shields, the repair after a lost life, the autopilot during scenes, and the wingman (Rook, then Juno) |

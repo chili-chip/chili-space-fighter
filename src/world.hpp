@@ -25,11 +25,16 @@ public:
     int wave = 1;
     Phase phase = Phase::Intro;
     Mode mode = Mode::Endless;
+    bool god = false;  // cheat: nothing hurts the player (kept between runs)
 
     // chapter: where a story run begins (1 to 6); retry: the chapter is played again after a game over
     void start(uint8_t ship_color, Starfield *stars, Mode mode, int chapter = 1, bool retry = false);
     void update(uint32_t dt);
     void draw(uint32_t time);
+
+    // cheats, from the pause menu
+    void skip_wave();   // destroys every enemy and the boss, as if the player had
+    void max_power();   // full weapon, three shields, rapid fire, full hull, 9 lives
 
     bool is_over() const { return phase == Phase::Over && phase_ms <= 0 && !dialogue.active(); }
     bool is_complete() const { return phase == Phase::Complete; }

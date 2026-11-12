@@ -271,6 +271,7 @@ void World::kill_enemy(Enemy &e) {
 }
 
 void World::player_hit() {
+    if (god) return;
     hit_this_wave = true;
     combo = 0;
     combo_ms = 0;
@@ -289,6 +290,27 @@ void World::player_hit() {
         set_phase(Phase::Over, OVER_MS);
         audio::stop_music();
     }
+}
+
+void World::skip_wave() {
+    if (phase != Phase::Fighting && phase != Phase::BossFight) return;
+    schedule_next = schedule_count;
+    for (auto &e : enemies) {
+        if (e.active) kill_enemy(e);
+        e.active = false;
+    }
+    if (boss.active && !boss.dying) {
+        boss.take_damage(boss.health);
+        ProjectileManager::get_instance().clear_enemy_bullets(true);
+    }
+}
+
+void World::max_power() {
+    player.weapon = Player::MAX_WEAPON;
+    player.rapid_ms = 10000;
+    for (int i = 0; i < Player::MAX_SHIELDS; i++) player.add_shield();
+    if (!player.repairing()) player.hull = Player::MAX_HULL;
+    player.lives = 9;
 }
 
 void World::collect(PowerUp &p) {
