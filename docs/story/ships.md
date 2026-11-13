@@ -13,9 +13,9 @@ chosen one when leaving Halo, and the others end up with the Static.
 | --- | --- | --- | --- |
 | **Silver** | ![Silver](img/ship-silver.png) | 1 | The rookie's ship, Nova's by default. Plain, reliable, the show's "everyone" fighter. |
 | **Sunset** | ![Sunset](img/ship-sunset.png) | 11 | Its pilot quit the show and sold it for scrap. Juno flies it. In chapter 2 it joins Nova's wing when Juno meets Nova (wave 14) and stays to the end of the chapter (it can't be hit and fires when you fire). |
-| **Viper** | ![Viper](img/ship-viper.png) | 21 | Taken from a Yards test bay in chapter 3. Zix rebuilds it and flies it badly but happily. |
-| **Nebula** | ![Nebula](img/ship-nebula.png) | 31 | Was a show prop, never flown. Ossa takes it in chapter 4: "It is the ugliest thing I have ever seen, and I love it." |
-| **Crimson** | ![Crimson](img/ship-crimson.png) | 41 | Rook's ship. In chapter 1 it flies on Nova's wing, the same way the Sunset does in chapter 2. Grounded after chapter 4. Rook flies it again in chapter 6, on the other side. |
+| **Viper** | ![Viper](img/ship-viper.png) | 21 | Taken from a Yards test bay in chapter 3. Zix rebuilds it and flies it badly but happily. In chapter 4 Doc borrows it to fly on Nova's left wing, and beams Rook aboard from it. |
+| **Nebula** | ![Nebula](img/ship-nebula.png) | 31 | Was a show prop, never flown. Ossa takes it at the start of chapter 4 and flies it on Nova's right wing all chapter: "It is the ugliest thing I have ever seen, and I love it." |
+| **Crimson** | ![Crimson](img/ship-crimson.png) | 41 | Rook's ship. In chapter 1 it flies on Nova's wing, the same way the Sunset does in chapter 2. Grounded after chapter 4. Rook flies it on Nova's wing again in chapter 6, on the other side. |
 
 ## Warden drones (enemies)
 
@@ -28,12 +28,14 @@ Outlanders. For the show, the Concord calls them "the Swarm". Pilots use the nic
 | ![Bug](img/warden-bug.png) | **Bug** | 6 | W-2 Picket | Fires straight down | Lane patrol. Stops ships without papers and calls in the rest. |
 | ![Wasp](img/warden-wasp.png) | **Wasp** | 17 | W-3 Hunter | Fires at the player | Built to chase runners. Painted orange for the show "so the kids can see it". |
 | ![Crab](img/warden-crab.png) | **Crab** | 39 | W-4 Shell | Fires a 3-way spread every 3 s | Yards guard. Its dome shield is made from Glimmer crystal. |
-| ![Tank](img/warden-tank.png) | **Tank** | 47 | W-5 Bastion | Slow, tough, fires 2 aimed shots every 4 s | Gate defender. The most expensive Warden. Zix calls it "a wall that flies". |
+| ![Tank](img/warden-tank.png) | **Tank** | 47 | W-5 Bastion | Slow, tough, comes in ones and twos, fires 2 aimed shots every 5 s | Gate defender. The most expensive Warden. Zix calls it "a wall that flies". |
 
 Things to keep true when the story goes in:
 
 - Wardens have no crew. The game can show as many explosions as it likes.
-- Wardens get faster and tougher every wave. In the story, that is the Concord sending more as the
+- Wardens get faster every wave and tougher every twelve waves (+1 hit point, up to +3). Drones
+  always go down in one hit.
+- Wardens get more numerous as the story goes on. In the story, that is the Concord sending more as the
   Static gets louder.
 
 ## Bosses
@@ -45,7 +47,7 @@ each one is a tool of control, and each fall frees something. Each boss has its 
 | --- | --- |
 | The Herald | fan, aimed burst |
 | The Tollgate | fan, scanner beam, aimed burst |
-| The Cradle | egg rain, ring, egg rain, aimed burst |
+| The Cradle | egg rain, drone launch, ring, drone launch |
 | The Paragon | aimed burst, beam, fan |
 | The Prism | spiral, ring, spiral, beam |
 | The Bulwark | twin beam (one from each hull), fan, spiral, egg rain |
@@ -63,7 +65,7 @@ one in two when enraged (below half health).
 | ![Herald](img/boss-herald.png) | **The Herald** | 64 | 1 | None, remote controlled | The story: a Concord drone carrier dressed as the "Swarm mothership" | The truth: Kit's scan |
 | ![Tollgate](img/boss-tollgate.png) | **The Tollgate** | 66 | 2 | None, gate AI | Movement: the gate guardian that checks papers | A convoy of Outlander families |
 | ![Cradle](img/boss-cradle.png) | **The Cradle** | 68 | 3 | Yards overseer (ejects) | Work: the carrier that launches Wardens from the Yards | The Yards' workers |
-| ![Paragon](img/boss-paragon.png) | **The Paragon** | 84 | 4 | Rook (ejects) | Loyalty: the Concord's best fighter for its best pilot | Rook, in a way |
+| ![Paragon](img/boss-paragon.png) | **The Paragon** | 84 | 4 | Rook (beamed aboard by Doc) | Loyalty: the Concord's best fighter for its best pilot | Rook, in a way |
 | ![Prism](img/boss-prism.png) | **The Prism** | 86 | 5 | None, crystal jammer | Speech: blocks the Static's signal to Halo | The signal, and Kit |
 | ![Bulwark](img/boss-bulwark.png) | **The Bulwark** | 88 | 6 | Marshal Brask (ejects, arrested) | Everything: the flagship that can lock every Lane | The Lanes |
 
@@ -82,13 +84,15 @@ the gate "closing". Its line: **"Papers, please."**
 
 ### The Cradle
 
-A green arch that carries drones and drops them like eggs. Built by Zix's team, which is why Zix
-knows where to hit it.
+A green arch that carries drones and drops them like eggs. In the fight it launches Drones from its
+hangar, three at a time (four when enraged), which fall out of it and drift to one side. It brings
+no other escorts. Built by Zix's team, which is why Zix knows where to hit it.
 
 ### The Paragon
 
 A white fighter, the pride of the Concord. Rook flies it. When it enrages (phase 2), that is Rook
-taking off the safety limits. Rook ejects when it falls.
+taking off the safety limits. As it falls, Doc's ship locks a tractor beam on it and pulls Rook's
+pod aboard a moment before it explodes.
 
 ### The Prism
 

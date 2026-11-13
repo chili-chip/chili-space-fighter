@@ -42,7 +42,7 @@ namespace {
         return (MovementPattern)irand(0, unlocked - 1);
     }
 
-    constexpr int CRIMSON = 41, SUNSET = 11;  // wingmen in assets/ships.png
+    constexpr int CRIMSON = 41, SUNSET = 11, NEBULA = 31, VIPER = 21;  // wingmen in assets/ships.png
     const uint8_t CONVOY_SPRITES[8] = {14, 26, 27, 34, 36, 46, 48, 57};  // small ships that are not Wardens
     constexpr int32_t CONVOY_GAP_MS = 300;
 }
@@ -63,7 +63,7 @@ void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter, b
     combo_ms = 0;
     next_life_score = EXTRA_LIFE_EVERY;
     player.reset(ship_color);
-    wingman.active = false;
+    for (auto &w : wingmen) w.active = false;
     boss.active = false;
     for (auto &e : enemies) e.active = false;
     powerups.clear();
@@ -138,13 +138,18 @@ void World::next_wave() {
     continue_after(After::Card);
 }
 
-// who flies on the player's wing, 0 for nobody: Rook in chapter 1, Juno in chapter 2 from her meeting scene on
-int World::wing_sprite() const {
+// who flies on the player's wing (slot 0 right, slot 1 left), 0 for nobody: Rook in chapter 1, Juno in
+// chapter 2 from her meeting scene on, Ossa and Doc in chapter 4, Rook again in chapter 6
+int World::wing_sprite(int slot) const {
     int nth = (wave - 1) % story::WAVES_PER_CHAPTER;
-    if (chapter() == 1) return CRIMSON;
     bool met = nth > story::MEETING_WAVE - 1 || (nth == story::MEETING_WAVE - 1 && phase != Phase::Intro);
-    if (chapter() == 2 && met) return SUNSET;
-    return 0;
+    switch (chapter()) {
+        case 1: return slot == 0 ? CRIMSON : 0;
+        case 2: return slot == 0 && met ? SUNSET : 0;
+        case 4: return slot == 0 ? NEBULA : VIPER;
+        case 6: return slot == 0 ? CRIMSON : 0;
+        default: return 0;
+    }
 }
 
 void World::adjust_difficulty(float step) {
@@ -159,7 +164,8 @@ void World::set_phase(Phase p, int32_t ms) {
 void World::spawn_enemy(EnemyKind kind, MovementPattern pattern, Vec2 origin, float dir) {
     float speed = std::min(1.0f + 0.05f * (wave - 1), 1.8f) * difficulty;
     float fire_rate = std::min(1.0f + 0.08f * (wave - 1), 2.5f) * difficulty;
-    int bonus_hp = std::min((wave - 1) / 8, 5);
+    // tougher every twelve waves, but Drones always go down in one hit
+    int bonus_hp = kind == EnemyKind::Drone ? 0 : std::min((wave - 1) / 12, 3);
     for (auto &e : enemies) {
         if (e.active) continue;
         e.spawn(kind, pattern, origin, dir, speed, fire_rate, bonus_hp);
@@ -181,7 +187,7 @@ void World::build_wave() {
         MovementPattern pattern = pick_pattern(wave);
         float dir = irand(0, 1) ? 1.0f : -1.0f;
         int count = irand(3, 5) + (wave > 6 ? 1 : 0);
-        if (kind == EnemyKind::Tank) count = irand(2, 3);
+        if (kind == EnemyKind::Tank) count = irand(1, 2);
         uint32_t spacing = (uint32_t)irand(280, 380);
         Vec2 origin(frand(16, SCREEN_W - 16), 0);
 
@@ -474,8 +480,8 @@ void World::update(uint32_t dt) {
         }
 
         case Phase::BossFight:
-            // later bosses bring escorts
-            if (boss.level >= 2 && !boss.dying && !boss.entering()) {
+            // later bosses bring escorts, except the Cradle, which launches its own drones
+            if (boss.level >= 2 && !boss.has_attack(BossAttack::Drones) && !boss.dying && !boss.entering()) {
                 escort_ms -= dt;
                 if (escort_ms <= 0) {
                     escort_ms = 4500;
@@ -536,22 +542,29 @@ void World::update(uint32_t dt) {
     }
 
     // a friend on the wing: one leaves before the next one joins
-    int wing = wing_sprite();
-    if (wingman.active && wingman.sprite != wing) wingman.leave();
-    if (!wingman.active && wing) wingman.join(wing);
+    for (int i = 0; i < 2; i++) {
+        Wingman &w = wingmen[i];
+        int ship = wing_sprite(i);
+        w.pair = wing_sprite(1 - i) != 0;
+        if (w.active && w.sprite != ship) w.leave();
+        if (!w.active && ship) w.join(ship, i == 0 ? 1.0f : -1.0f);
+    }
 
     // while someone talks, the ship flies itself to the middle, clear of the text box (A turns the page, it doesn't fire)
     player.autopilot = phase == Phase::Story;
-    player.autopilot_to = Vec2(SCREEN_W / 2 - (wingman.active ? 7 : 0), SCREEN_H / 2);
+    player.autopilot_to = Vec2(SCREEN_W / 2 - (wingmen[0].active && !wingmen[1].active ? 7 : 0), SCREEN_H / 2);
 
     Vec2 target = player.alive ? player.position : Vec2(SCREEN_W / 2, SCREEN_H);
     player.update(dt);
     comms.update(dt);
-    wingman.update(dt, player);
+    for (auto &w : wingmen) w.update(dt, player);
     update_convoy(dt);
     for (auto &e : enemies) e.update(dt, target, player.alive);
     boss.pace_scale = difficulty;
     boss.update(dt, target, player.alive);
+    for (; boss.launches > 0; boss.launches--) {
+        spawn_enemy(EnemyKind::Drone, MovementPattern::Drop, boss.position + Vec2(frand(-6, 6), 6), irand(0, 1) ? 1.0f : -1.0f);
+    }
     powerups.update(dt);
     ProjectileManager::get_instance().update(dt);
     if (phase != Phase::Over) handle_collisions();
@@ -579,6 +592,31 @@ void World::draw_convoy(uint32_t time) {
     }
 }
 
+// chapter 4: as the Paragon goes down, Doc's ship beams Rook's pod aboard
+void World::draw_rescue(uint32_t time) {
+    Wingman &doc = wingmen[1];
+    if (chapter() != 4 || !boss.active || !boss.dying || !doc.active) return;
+    float k = 1.0f - (float)boss.dying_ms / Boss::DEATH_MS;
+    Point o = fx::offset();
+    Point from = Point(boss.position) + o, to = Point(doc.position) + Point(0, -4) + o;
+    // a flickering tractor beam, three lines wide
+    for (int i = -1; i <= 1; i++) {
+        screen.pen = Pen(120, 230, 255, (uint8_t)(i == 0 ? 200 : 70 + (blit::random() & 63)));
+        screen.line(from + Point(i, 0), to + Point(i, 0));
+    }
+    // the pod rides up the beam into Doc's ship
+    float t = clampf((k - 0.15f) / 0.7f, 0, 1);
+    if (t >= 1) return;
+    t = t * t * (3 - 2 * t);
+    Point pod(lerpf(from.x, to.x, t), lerpf(from.y, to.y, t));
+    screen.pen = Pen(120, 230, 255, 120);
+    screen.circle(pod, 3);
+    screen.pen = Pen(220, 40, 60);
+    screen.rectangle(Rect(pod.x - 1, pod.y - 1, 3, 3));
+    screen.pen = Pen(255, 255, 255);
+    screen.pixel(pod);
+}
+
 void World::draw(uint32_t time) {
     draw_convoy(time);
     // behind the action so it never hides the boss or a bullet; under the boss's health bar
@@ -586,7 +624,8 @@ void World::draw(uint32_t time) {
     powerups.draw(time);
     for (auto &e : enemies) e.draw();
     boss.draw(time);
-    wingman.draw(time);
+    for (auto &w : wingmen) w.draw(time);
+    draw_rescue(time);
     player.draw(time);
     ProjectileManager::get_instance().draw();
     fx::draw();

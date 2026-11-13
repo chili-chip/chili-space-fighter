@@ -15,9 +15,10 @@ desktop (SDL) and in the browser: **[play it on the web](https://space-fighter-g
 - Endless numbered waves built from enemy formations: dives, zig-zags, swoops, loops, side sweeps,
   squadrons that hover in formation before diving at you, and from wave 5 on figures of eight,
   V formations that dive at you, and rows that strafe side to side and stop to fire
-- Five enemy types with their own fire patterns, getting faster and tougher every wave
+- Five enemy types with their own fire patterns, getting faster every wave and tougher every twelve
+  (the small Drones always go down in one hit)
 - A boss every tenth wave, each with its own attacks (fans, aimed bursts, spirals, rings, egg rain and
-  beams) and an enraged second phase. Between attacks a boss may shake, flash and dash over your
+  beams; the Cradle also launches drones) and an enraged second phase. Between attacks a boss may shake, flash and dash over your
   column, more often when enraged
 - Power-ups: weapon level (twin, spread, quad, max), rapid fire, shield, repair, extra life and bonus coins.
   Shields stack up to 3 layers: each hit pops one, and the HUD shows the count next to the S

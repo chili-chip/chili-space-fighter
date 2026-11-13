@@ -203,13 +203,13 @@ void Player::draw(uint32_t time) {
     }
 }
 
-void Wingman::join(int ship) {
+void Wingman::join(int ship, float wing) {
     sprite = ship;
     active = true;
     leaving = false;
-    side = 1;
+    side = wing;
     fire_cooldown = 0;
-    position = Vec2(SCREEN_W / 2 + WING_GAP, SCREEN_H + 10);
+    position = Vec2(SCREEN_W / 2 + side * WING_GAP, SCREEN_H + 10);
     velocity = Vec2(0, 0);
 }
 
@@ -228,9 +228,10 @@ void Wingman::update(uint32_t dt, const Player &player) {
         if (position.y < -10) active = false;
     } else {
         // keep to the side with room, swapping only near the edge so it doesn't cross back and forth
-        if (side > 0 && player.position.x > SCREEN_W - WING_GAP - 6) side = -1;
-        if (side < 0 && player.position.x < WING_GAP + 6) side = 1;
+        if (!pair && side > 0 && player.position.x > SCREEN_W - WING_GAP - 6) side = -1;
+        if (!pair && side < 0 && player.position.x < WING_GAP + 6) side = 1;
         Vec2 to = player.alive ? player.position + Vec2(side * WING_GAP, 3) : Vec2(SCREEN_W / 2 + side * WING_GAP, SCREEN_H - 11);
+        to.x = clampf(to.x, 4, SCREEN_W - 4);
         position += (to - position) * std::min(1.0f, dt * 0.006f);
 
         if (player.alive && !player.autopilot && player.controls_enabled && (buttons & Button::A) && fire_cooldown <= 0) {

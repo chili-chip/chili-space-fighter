@@ -67,7 +67,7 @@ TURBO wing lead, the face of the show. Nobody has seen Rook without the red helm
 pilot and a true believer: the Concord took Rook out of a hard life and gave a uniform and a name.
 
 - **Wants:** order, and to deserve the uniform.
-- In chapter 1 Rook's Crimson flies on Nova's wing.
+- In chapters 1 and 6 Rook's Crimson flies on Nova's wing.
 - **Arc (acceptance, redemption):** Rook hunts Nova in chapter 4 in the Paragon and loses. Doc
   treats Rook. Rook expects a cell and gets an open door instead. In chapter 6 Rook flies the
   Crimson fighter at Nova's side.
@@ -148,6 +148,7 @@ patient and very hard to impress.
 
 - **Wants:** open gates. Not revenge, not power.
 - **Voice:** slow and heavy, like someone who has said goodbye a lot. Short statements, then one line that stays with you. No contractions.
+- In chapter 4 Ossa flies the Nebula on Nova's right wing.
 - Ossa is the one who decides Rook gets a second chance. *"That is why the doors stay open."*
 
 ## Doc
@@ -161,7 +162,9 @@ anyone who comes through the door, Static or Concord.
 
 - **Wants:** fewer patients.
 - **Voice:** warm, practical, gently bossy. Talks to everyone like a patient who should be resting.
-- Doc patches up Rook in chapter 4 and is the first to talk to Rook as a person.
+- In chapter 4 Doc flies Zix's borrowed Viper on Nova's left wing. When the Paragon falls, Doc beams
+  Rook's pod aboard before it explodes, then patches Rook up and is the first to talk to Rook as a
+  person.
 
 ## Wisp
 

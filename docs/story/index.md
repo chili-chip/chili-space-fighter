@@ -165,7 +165,8 @@ real `minimal_font` character widths.
 | ![Chapter card](img/game-chapter-card.png) | **Chapter card.** Takes the place of "WAVE N / GET READY" on the first wave of a chapter. |
 | ![The Static](img/game-radio-static.png) | **`[STATIC]`.** No name; the static frames flicker. |
 | ![Comms static](img/game-static.png) | **Comms static.** When someone new starts talking, and when the last speaker signs off, the avatar box shows snow and the name scrambles in (or out) letter by letter for 0.4 s, with a crackle. |
-| ![Juno on the wing](img/game-wingman.png) | **Autopilot and wingmen.** While a scene is open the ship flies itself to the middle, above the box. In chapter 1 Rook's Crimson flies on its wing. In chapter 2 Juno's Sunset joins in her meeting scene (wave 14) and stays to the end of the chapter, in scenes and in the fight. |
+| ![Juno on the wing](img/game-wingman.png) | **Autopilot and wingmen.** While a scene is open the ship flies itself to the middle, above the box. In chapter 1 Rook's Crimson flies on its wing. In chapter 2 Juno's Sunset joins in her meeting scene (wave 14) and stays to the end of the chapter. In chapter 4 Ossa's Nebula and Doc's Viper fly on both wings, and in chapter 6 Rook's Crimson is back. They fly in scenes and in the fight. |
+| ![Rook beamed aboard](img/game-rescue.png) | **The rescue.** As the Paragon goes down in chapter 4, Doc's ship locks a tractor beam on it and pulls Rook's pod aboard before the explosion. |
 | ![Repairs](img/game-repair.png) | **Repairs.** When a hit costs a life but not the last one, the ship catches fire for 2.5 s: its hull glows, flames stream out behind it and cool from white to red, and smoke trails after them. It can't be hit or fire and flies at half speed while the hull pips fill up again. AUX-7 says a `repairs` line in a small box under the score, drawn behind enemies and bullets so it never hides them; the game does not stop. |
 | ![The convoy](img/game-convoy.png) | **The convoy.** After the Tollgate falls, Juno's 42 ships fly up the screen one after another, behind your ship, through the end of the chapter. |
 | ![A beam](img/game-beam.png) | **Beam attack.** The Tollgate, Paragon, Prism and Bulwark fire beams; the Bulwark fires one from each hull. A thin flickering line warns first. |
@@ -195,8 +196,8 @@ real `minimal_font` character widths.
   (`face_frame()` in `src/story.cpp`), starting after the frame from the script, then rests on
   frame 0 with the mouth closed.
 - While a scene is open the ship flies itself to the middle of the screen, above the text box, and
-  does not fire. In chapter 1 Rook's Crimson flies next to it, and in chapter 2 Juno's Sunset from
-  her meeting on. MENU still pauses.
+  does not fire. Wingmen fly next to it: Rook's Crimson in chapters 1 and 6, Juno's Sunset in
+  chapter 2 from her meeting on, and Ossa's Nebula and Doc's Viper in chapter 4. MENU still pauses.
 - A page ends at the end of a sentence. When a sentence is too long for one page, it is split after
   a comma; only a part with no comma that is still too long is split between words.
 - When someone new starts talking, the avatar box shows static for 0.4 s with a crackle of noise,
@@ -277,8 +278,9 @@ conversation keeps moving.
 
 - No new weapons or enemies. Everything uses the existing sprites; the backgrounds are drawn in
   code from them until new art exists ([Backgrounds](backgrounds.md) lists what is needed).
-- Stage directions like "(Ossa takes the Nebula fighter)" are not acted out. The ship is still
-  the one picked in Options. The exceptions are the wingmen (Rook's Crimson in chapter 1, Juno's
-  Sunset in chapter 2) and Juno's convoy after the Tollgate.
+- Most stage directions are not acted out, and the player's ship is still the one picked in
+  Options. The exceptions are the wingmen (Rook in chapters 1 and 6, Juno in chapter 2, Ossa and
+  Doc in chapter 4), Juno's convoy after the Tollgate, and Doc beaming Rook aboard after the
+  Paragon.
 - No branching or saves for story progress. A run is one telling of the story.
 - No real-world groups, flags or slogans. The themes stay in a made-up world on purpose.
