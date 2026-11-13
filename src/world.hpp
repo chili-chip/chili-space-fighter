@@ -17,7 +17,7 @@ public:
     enum class Mode { Story, Endless };
 
     Player player;
-    Wingman wingman;  // Juno, in chapter 2
+    Wingman wingman;  // Rook in chapter 1, Juno in chapter 2
     Boss boss;
     PowerUpManager powerups;
 
@@ -25,11 +25,16 @@ public:
     int wave = 1;
     Phase phase = Phase::Intro;
     Mode mode = Mode::Endless;
+    bool god = false;  // cheat: nothing hurts the player (kept between runs)
 
-    // chapter: where a story run begins (1 to 6), to retry a chapter after a game over
-    void start(uint8_t ship_color, Starfield *stars, Mode mode, int chapter = 1);
+    // chapter: where a story run begins (1 to 6); retry: the chapter is played again after a game over
+    void start(uint8_t ship_color, Starfield *stars, Mode mode, int chapter = 1, bool retry = false);
     void update(uint32_t dt);
     void draw(uint32_t time);
+
+    // cheats, from the pause menu
+    void skip_wave();   // destroys every enemy and the boss, as if the player had
+    void max_power();   // full weapon, three shields, rapid fire, full hull, 9 lives
 
     bool is_over() const { return phase == Phase::Over && phase_ms <= 0 && !dialogue.active(); }
     bool is_complete() const { return phase == Phase::Complete; }
@@ -42,6 +47,12 @@ private:
     static constexpr int MAX_SPAWNS = 64;
     static constexpr uint32_t EXTRA_LIFE_EVERY = 10000;
     static constexpr int32_t COMBO_WINDOW_MS = 1500;
+    static constexpr int CONVOY_SHIPS = 42;  // the families' ships that go through the Tollgate
+
+    // story mode only: a rubber band on enemy fire rate and speed and on the boss's pace
+    static constexpr float DIFFICULTY_MIN = 0.7f, DIFFICULTY_MAX = 1.15f;
+    static constexpr float DIFFICULTY_DOWN = 0.1f;  // a life lost, or a retried chapter
+    static constexpr float DIFFICULTY_UP = 0.05f;   // a wave cleared without a hit
 
     struct Spawn {
         uint32_t at;
@@ -63,11 +74,19 @@ private:
     int32_t combo_ms = 0;
     bool hit_this_wave = false;
     bool perfect_bonus = false;
+    float difficulty = 1;
     Starfield *stars = nullptr;
+
+    struct ConvoyShip { float x, y, speed; uint8_t sprite; };
+    ConvoyShip convoy[CONVOY_SHIPS];
+    int convoy_count = 0;  // ships launched so far
+    int32_t convoy_ms = 0; // until the next one launches
 
     // what happens when the scene in the Story phase ends
     enum class After { Card, Wave, Boss, Ending, NextWave, Complete };
     story::Dialogue dialogue;
+    story::Comms comms;    // the ship computer while the ship burns
+    int repair_line = 0;
     After after_story = After::Wave;
     bool game_over_said = false;
 
@@ -76,6 +95,10 @@ private:
     void begin_wave();
     void spawn_boss();
     void next_wave();
+    int wing_sprite() const;
+    void adjust_difficulty(float step);
+    void update_convoy(uint32_t dt);
+    void draw_convoy(uint32_t time);
     audio::Song stage_song() const;
     bool chapter_first_wave() const { return chapter() > 0 && (wave - 1) % story::WAVES_PER_CHAPTER == 0; }
 

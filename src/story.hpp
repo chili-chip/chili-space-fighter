@@ -24,14 +24,16 @@ struct Scene {
 
 struct Chapter {
     const char *card[3];  // "CHAPTER 1", title, place
-    Scene start, radio, boss_warning, after_boss, game_over;
+    Scene start, meeting, radio, boss_warning, after_boss, game_over;
 };
 
 constexpr int CHAPTERS = 6;
 constexpr int WAVES_PER_CHAPTER = 10;  // the last wave of a chapter is its boss
+constexpr int MEETING_WAVE = 4;        // wave of the chapter where the meeting scene plays
 constexpr int RADIO_WAVE = 5;          // wave of the chapter where the radio scene plays
 
-extern const Scene intro, ending, free_lanes, free_lanes_game_over;
+// repairs: the ship computer's lines while the ship burns after losing a life, used in turn
+extern const Scene intro, ending, free_lanes, free_lanes_game_over, repairs;
 extern const Chapter chapters[CHAPTERS];
 
 // Splits a speech into pages of at most `lines` lines wrapped to `width`. A page ends at the end of a
@@ -69,7 +71,23 @@ private:
     int page_chars() const;
     bool talking() const { return revealed < page_chars(); }
     void draw_card(uint32_t time);
-    void draw_static(const Rect &face);
+};
+
+// A small comms box under the HUD that doesn't stop the game: a face and up to two lines, revealed
+// letter by letter. It closes by itself after ms.
+class Comms {
+public:
+    void say(const Speech &speech, int32_t ms);
+    void update(uint32_t dt);
+    void draw(int y);
+
+private:
+    const Speech *speech = nullptr;
+    std::vector<std::string> lines;
+    uint32_t shown_ms = 0;
+    int32_t left_ms = 0;
+    int revealed = 0;
+    int chars() const;
 };
 
 }  // namespace story

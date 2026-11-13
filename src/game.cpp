@@ -28,6 +28,8 @@ uint32_t last_time = 0;
 uint32_t state_time = 0;     // ms since entering the current state
 int32_t fade_ms = 0;
 int cursor = 0;
+bool cheats = false;         // unlocked by CHEAT_CODE on the title screen, until the game is closed
+int code_pos = 0;            // how much of the code has been entered
 
 // game over results
 int final_rank = -1;
@@ -117,8 +119,8 @@ constexpr int TITLE_COUNT = 5;
 
 const char *const MODE_ITEMS[] = {"STORY", "ENDLESS", "BACK"};
 
-void start_game(World::Mode mode, int chapter = 1) {
-    world.start(save_data.ship, &stars, mode, chapter);
+void start_game(World::Mode mode, int chapter = 1, bool retry = false) {
+    world.start(save_data.ship, &stars, mode, chapter, retry);
     go(State::Playing);
 }
 
@@ -141,9 +143,26 @@ void draw_mode_select(uint32_t time) {
     draw_hint("B BACK", time);
 }
 
+// left, left, right, right, left, right, left, right, B on the title screen turns on the cheats in the pause menu
+const uint32_t CHEAT_CODE[] = {Button::DPAD_LEFT, Button::DPAD_LEFT, Button::DPAD_RIGHT, Button::DPAD_RIGHT,
+                               Button::DPAD_LEFT, Button::DPAD_RIGHT, Button::DPAD_LEFT, Button::DPAD_RIGHT, Button::B};
+constexpr int CHEAT_CODE_LEN = sizeof(CHEAT_CODE) / sizeof(CHEAT_CODE[0]);
+
+void check_cheat_code() {
+    if (!buttons.pressed) return;
+    code_pos = buttons.pressed & CHEAT_CODE[code_pos] ? code_pos + 1 : (buttons.pressed & CHEAT_CODE[0] ? 1 : 0);
+    if (code_pos == CHEAT_CODE_LEN) {
+        code_pos = 0;
+        cheats = !cheats;
+        if (!cheats) world.god = false;
+        audio::play(cheats ? audio::Sfx::ExtraLife : audio::Sfx::MenuBack);
+    }
+}
+
 void update_title() {
     stars.speed = lerpf(stars.speed, 1.5f, 0.02f);
     if (state_time < 400) return;
+    check_cheat_code();
     menu_nav(TITLE_COUNT);
     if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
@@ -192,6 +211,7 @@ void draw_title(uint32_t time) {
     snprintf(buf, sizeof(buf), "HI %06lu", (unsigned long)best_score());
     shadow_text(buf, minimal_font, Point(2, SCREEN_H - 9), Pen(255, 200, 90));
     shadow_text(VERSION, minimal_font, Point(SCREEN_W - 2, SCREEN_H - 9), Pen(90, 90, 130), TextAlign::top_right);
+    if (cheats) shadow_text("CHEATS ON", minimal_font, Point(SCREEN_W / 2, SCREEN_H - 18), rainbow(time * 0.006f), TextAlign::top_center);
 }
 
 // --------------------------------------------------------------------------
@@ -325,12 +345,33 @@ void draw_credits(uint32_t time) {
 // Playing, pause, game over
 // --------------------------------------------------------------------------
 
-const char *const PAUSE_ITEMS[] = {"RESUME", "QUIT TO TITLE"};
+// the pause menu; the cheats show only once unlocked, NEXT CHAPTER only in story mode
+enum class PauseItem { Resume, God, SkipWave, NextChapter, MaxPower, Quit };
+PauseItem pause_items[6];
+const char *pause_labels[6];
+int pause_count = 0;
+
+void build_pause_menu() {
+    pause_count = 0;
+    auto add = [](PauseItem item, const char *label) {
+        pause_items[pause_count] = item;
+        pause_labels[pause_count++] = label;
+    };
+    add(PauseItem::Resume, "RESUME");
+    if (cheats) {
+        add(PauseItem::God, world.god ? "GOD MODE: ON" : "GOD MODE: OFF");
+        add(PauseItem::SkipWave, "SKIP WAVE");
+        if (world.mode == World::Mode::Story && world.chapter() < story::CHAPTERS) add(PauseItem::NextChapter, "NEXT CHAPTER");
+        add(PauseItem::MaxPower, "MAX POWER");
+    }
+    add(PauseItem::Quit, "QUIT TO TITLE");
+}
 
 void update_playing(uint32_t dt) {
     world.update(dt);
     if (world.phase != World::Phase::Over && (just_pressed(Button::MENU) || just_pressed(Button::Y))) {
         audio::play(audio::Sfx::Pause);
+        build_pause_menu();
         go(State::Paused);
         fade_ms = 0;
         return;
@@ -354,27 +395,44 @@ void update_playing(uint32_t dt) {
 }
 
 void update_paused() {
-    menu_nav(2);
-    if (just_pressed(Button::MENU) || just_pressed(Button::Y) || just_pressed(Button::B) || (just_pressed(Button::A) && cursor == 0)) {
+    menu_nav(pause_count);
+    PauseItem item = pause_items[cursor];
+    if (just_pressed(Button::MENU) || just_pressed(Button::Y) || just_pressed(Button::B) || (just_pressed(Button::A) && item == PauseItem::Resume)) {
         audio::play(audio::Sfx::Pause);
         state = State::Playing;
         return;
     }
-    if (just_pressed(Button::A) && cursor == 1) {
-        audio::play(audio::Sfx::MenuBack);
-        ProjectileManager::get_instance().clear();
-        fx::clear();
-        audio::play_song(audio::Song::Title);
-        go(State::Title);
+    if (!just_pressed(Button::A)) return;
+    switch (item) {
+        case PauseItem::Quit:
+            audio::play(audio::Sfx::MenuBack);
+            ProjectileManager::get_instance().clear();
+            fx::clear();
+            audio::play_song(audio::Song::Title);
+            go(State::Title);
+            return;
+        case PauseItem::God:
+            world.god = !world.god;
+            build_pause_menu();
+            audio::play(audio::Sfx::MenuSelect);
+            return;  // stays paused, to show the new setting
+        case PauseItem::SkipWave: world.skip_wave(); break;
+        case PauseItem::MaxPower: world.max_power(); break;
+        case PauseItem::NextChapter: world.start(save_data.ship, &stars, world.mode, world.chapter() + 1); break;
+        default: break;
     }
+    audio::play(audio::Sfx::MenuSelect);
+    state = State::Playing;
 }
 
 void draw_paused(uint32_t time) {
     screen.pen = Pen(0, 0, 0, 150);
     screen.rectangle(Rect(0, 0, SCREEN_W, SCREEN_H));
-    draw_panel(Rect(20, 40, 88, 48));
-    shadow_text("PAUSED", outline_font, Point(SCREEN_W / 2, 46), Pen(255, 255, 255), TextAlign::top_center);
-    draw_menu(PAUSE_ITEMS, 2, 62, time);
+    int h = 26 + pause_count * 11;
+    int y = (SCREEN_H - h) / 2;
+    draw_panel(Rect(12, y, SCREEN_W - 24, h));
+    shadow_text("PAUSED", outline_font, Point(SCREEN_W / 2, y + 6), Pen(255, 255, 255), TextAlign::top_center);
+    draw_menu(pause_labels, pause_count, y + 22, time);
 }
 
 void update_name_entry() {
@@ -406,7 +464,7 @@ void update_game_over() {
     }
     if (just_pressed(Button::A)) {
         audio::play(audio::Sfx::MenuSelect);
-        start_game(world.mode, world.chapter());  // story mode retries the chapter
+        start_game(world.mode, world.chapter(), true);  // story mode retries the chapter
     } else if (just_pressed(Button::B)) {
         audio::play(audio::Sfx::MenuBack);
         go(State::Title);

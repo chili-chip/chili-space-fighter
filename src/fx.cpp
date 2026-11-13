@@ -12,10 +12,13 @@ namespace {
         bool active = false;
     };
 
+    enum class Kind : uint8_t { Spark, Flame, Smoke };
+
     struct Particle {
         Vec2 pos, vel;
         Pen color;
         uint32_t age = 0, life = 0;
+        Kind kind = Kind::Spark;
         bool active = false;
     };
 
@@ -57,10 +60,18 @@ void explosion(Vec2 pos, Boom kind, uint32_t delay_ms) {
     }
 }
 
+Particle &new_particle() {
+    Particle &p = parts[next_particle];
+    next_particle = (next_particle + 1) % MAX_PARTICLES;
+    p.kind = Kind::Spark;
+    p.age = 0;
+    p.active = true;
+    return p;
+}
+
 void particles(Vec2 pos, Pen color, int count, float speed, uint32_t life_ms) {
     for (int i = 0; i < count; i++) {
-        Particle &p = parts[next_particle];
-        next_particle = (next_particle + 1) % MAX_PARTICLES;
+        Particle &p = new_particle();
         float a = frand(0, 2 * PI_F);
         float s = frand(0.3f, 1.0f) * speed;
         p.pos = pos;
@@ -69,6 +80,24 @@ void particles(Vec2 pos, Pen color, int count, float speed, uint32_t life_ms) {
         p.age = 0;
         p.life = life_ms / 2 + (uint32_t)irand(0, (int)life_ms / 2);
         p.active = true;
+    }
+}
+
+void fire(Vec2 pos) {
+    // the ship flies up the screen, so the flames and smoke stream out behind it
+    for (int i = 0; i < 3; i++) {
+        Particle &p = new_particle();
+        p.kind = Kind::Flame;
+        p.pos = pos + Vec2(frand(-3, 2), frand(-3, 1));
+        p.vel = Vec2(frand(-0.01f, 0.01f), frand(0.03f, 0.06f));
+        p.life = (uint32_t)irand(200, 380);
+    }
+    if (irand(0, 1) == 0) {
+        Particle &p = new_particle();
+        p.kind = Kind::Smoke;
+        p.pos = pos + Vec2(frand(-2, 2), 3);
+        p.vel = Vec2(frand(-0.01f, 0.01f), 0.035f);
+        p.life = (uint32_t)irand(600, 900);
     }
 }
 
@@ -134,13 +163,31 @@ void update(uint32_t dt) {
 }
 
 void draw() {
+    // smoke first, so the flames burn in front of it
     for (auto &p : parts) {
-        if (!p.active) continue;
+        if (!p.active || p.kind != Kind::Smoke) continue;
         float t = (float)p.age / p.life;
+        screen.pen = Pen(120, 112, 120, (uint8_t)(140 * (1.0f - t)));
+        screen.circle(Point(p.pos) + shake_offset, 1 + (int)(t * 3));
+    }
+    for (auto &p : parts) {
+        if (!p.active || p.kind == Kind::Smoke) continue;
+        float t = (float)p.age / p.life;
+        Point at = Point(p.pos) + shake_offset;
+        if (p.kind == Kind::Flame) {
+            // white hot, then yellow, orange and red as it cools; bigger while it is hot
+            static const Pen HEAT[4] = {Pen(255, 250, 210), Pen(255, 214, 60), Pen(255, 130, 20), Pen(200, 40, 20)};
+            Pen c = HEAT[std::min(3, (int)(t * 4))];
+            c.a = (uint8_t)(255 * std::min(1.0f, 2.0f * (1.0f - t)));
+            screen.pen = c;
+            if (t < 0.5f) screen.rectangle(Rect(at.x, at.y, 2, 2));
+            else screen.pixel(at);
+            continue;
+        }
         Pen c = p.color;
         c.a = (uint8_t)(255 * (1.0f - t));
         screen.pen = c;
-        screen.pixel(Point(p.pos) + shake_offset);
+        screen.pixel(at);
     }
 
     for (auto &e : explosions) {

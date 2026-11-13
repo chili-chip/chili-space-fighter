@@ -4,7 +4,7 @@ namespace {
     // pixels per ms for each layer, far to near
     const float LAYER_SPEED[3] = {0.008f, 0.020f, 0.045f};
 
-    enum Kind : uint8_t { NONE, ROCK, RING, CRYSTAL, CLOUD };
+    enum Kind : uint8_t { NONE, ROCK, CRYSTAL, CLOUD };
     enum Beacons : uint8_t { NO_BEACONS, LANE, GATE, ALARM };
 
     struct Theme {
@@ -20,20 +20,20 @@ namespace {
         {Pen(4, 2, 18), {Pen(70, 70, 110), Pen(140, 140, 190), Pen(240, 240, 255)}, NONE, 0, NO_BEACONS},
         // 1 Halo Station: a clean blue sky and the lights of the Lanes
         {Pen(2, 6, 26), {Pen(60, 80, 130), Pen(130, 160, 220), Pen(230, 240, 255)}, NONE, 0, LANE},
-        // 2 the Tollgate: warm haze, gate rings, amber warning lights
-        {Pen(16, 8, 6), {Pen(100, 70, 50), Pen(180, 140, 100), Pen(255, 230, 200)}, RING, 2, GATE},
+        // 2 the Tollgate: warm haze and amber warning lights
+        {Pen(16, 8, 6), {Pen(100, 70, 50), Pen(180, 140, 100), Pen(255, 230, 200)}, NONE, 0, GATE},
         // 3 the Rust Ring: dust and rocks
         {Pen(16, 7, 4), {Pen(90, 60, 40), Pen(160, 110, 80), Pen(240, 210, 180)}, ROCK, 5, NO_BEACONS},
         // 4 the Drift: purple gas clouds
         {Pen(10, 4, 20), {Pen(80, 60, 120), Pen(150, 120, 200), Pen(240, 220, 255)}, CLOUD, 4, NO_BEACONS},
         // 5 Glimmer: pink sky and crystals
         {Pen(14, 3, 20), {Pen(120, 60, 140), Pen(255, 130, 220), Pen(200, 255, 250)}, CRYSTAL, 6, NO_BEACONS},
-        // 6 Halo Station in lockdown: red alarm lights and the shut gates (the sky stays dark so red bullets show)
-        {Pen(10, 6, 18), {Pen(90, 70, 90), Pen(170, 140, 160), Pen(255, 235, 240)}, RING, 2, ALARM},
+        // 6 Halo Station in lockdown: red alarm lights (the sky stays dark so red bullets show)
+        {Pen(10, 6, 18), {Pen(90, 70, 90), Pen(170, 140, 160), Pen(255, 235, 240)}, NONE, 0, ALARM},
     };
 
     // sprites in assets/misc.png
-    constexpr int ROCK_SMALL = 40, ROCK_BIG = 28, RING_OPEN = 63, RING_SHUT = 61;
+    constexpr int ROCK_SMALL = 40, ROCK_BIG = 28;
     const int CRYSTAL_FRAMES[3] = {84, 85, 86};
 }
 
@@ -59,7 +59,6 @@ void Starfield::place(Prop &p, bool anywhere) {
     p.y = anywhere ? frand(-20, SCREEN_H) : -20 - frand(0, 60);
     switch (p.kind) {
         case ROCK: p.speed = p.seed % 3 == 0 ? 0.022f : frand(0.03f, 0.06f); break;
-        case RING: p.speed = 0.028f; p.y = anywhere ? frand(-20, SCREEN_H) : -20 - frand(0, 120); break;
         case CLOUD: p.speed = frand(0.010f, 0.016f); break;
         default: p.speed = frand(0.02f, 0.04f); break;
     }
@@ -88,9 +87,6 @@ void Starfield::draw_prop(const Prop &p) {
         case ROCK:
             if (p.seed % 3 == 0) draw_sprite(sheets.misc, ROCK_BIG, pos, Size(2, 2), p.seed & 3);
             else draw_sprite(sheets.misc, ROCK_SMALL, pos, Size(1, 1), p.seed & 3);
-            break;
-        case RING:
-            draw_sprite(sheets.misc, theme == 6 ? RING_SHUT : RING_OPEN, pos, Size(2, 2));
             break;
         case CRYSTAL:
             draw_sprite(sheets.misc, CRYSTAL_FRAMES[(time / 160 + p.seed) % 3], pos);

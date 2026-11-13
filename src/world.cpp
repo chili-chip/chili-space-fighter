@@ -37,18 +37,28 @@ namespace {
     }
 
     MovementPattern pick_pattern(int wave) {
-        int unlocked = wave >= 4 ? 6 : (wave >= 3 ? 5 : (wave >= 2 ? 3 : 2));
+        // waves 5, 7 and 9 add the figure of eight, the V dive and the strafe
+        int unlocked = wave >= 9 ? 9 : (wave >= 7 ? 8 : (wave >= 5 ? 7 : (wave >= 4 ? 6 : (wave >= 3 ? 5 : (wave >= 2 ? 3 : 2)))));
         return (MovementPattern)irand(0, unlocked - 1);
     }
+
+    constexpr int CRIMSON = 41, SUNSET = 11;  // wingmen in assets/ships.png
+    const uint8_t CONVOY_SPRITES[8] = {14, 26, 27, 34, 36, 46, 48, 57};  // small ships that are not Wardens
+    constexpr int32_t CONVOY_GAP_MS = 300;
 }
 
-void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter) {
+void World::start(uint8_t ship_color, Starfield *s, Mode m, int start_chapter, bool retry) {
     stars = s;
     mode = m;
+    // a retried chapter is a little easier; a new run starts level
+    difficulty = mode == Mode::Story && retry ? std::max(DIFFICULTY_MIN, difficulty - DIFFICULTY_DOWN) : 1.0f;
     score = 0;
     wave = mode == Mode::Story ? (start_chapter - 1) * story::WAVES_PER_CHAPTER + 1 : 1;
     game_over_said = false;
     dialogue = story::Dialogue();
+    comms = story::Comms();
+    convoy_count = 0;
+    convoy_ms = 0;
     combo = 0;
     combo_ms = 0;
     next_life_score = EXTRA_LIFE_EVERY;
@@ -128,14 +138,27 @@ void World::next_wave() {
     continue_after(After::Card);
 }
 
+// who flies on the player's wing, 0 for nobody: Rook in chapter 1, Juno in chapter 2 from her meeting scene on
+int World::wing_sprite() const {
+    int nth = (wave - 1) % story::WAVES_PER_CHAPTER;
+    if (chapter() == 1) return CRIMSON;
+    bool met = nth > story::MEETING_WAVE - 1 || (nth == story::MEETING_WAVE - 1 && phase != Phase::Intro);
+    if (chapter() == 2 && met) return SUNSET;
+    return 0;
+}
+
+void World::adjust_difficulty(float step) {
+    if (mode == Mode::Story) difficulty = clampf(difficulty + step, DIFFICULTY_MIN, DIFFICULTY_MAX);
+}
+
 void World::set_phase(Phase p, int32_t ms) {
     phase = p;
     phase_ms = ms;
 }
 
 void World::spawn_enemy(EnemyKind kind, MovementPattern pattern, Vec2 origin, float dir) {
-    float speed = std::min(1.0f + 0.05f * (wave - 1), 1.8f);
-    float fire_rate = std::min(1.0f + 0.08f * (wave - 1), 2.5f);
+    float speed = std::min(1.0f + 0.05f * (wave - 1), 1.8f) * difficulty;
+    float fire_rate = std::min(1.0f + 0.08f * (wave - 1), 2.5f) * difficulty;
     int bonus_hp = std::min((wave - 1) / 8, 5);
     for (auto &e : enemies) {
         if (e.active) continue;
@@ -177,6 +200,19 @@ void World::build_wave() {
                 origin.y = 22 + irand(0, 2) * 12;
                 spacing = 120;
                 break;
+            case MovementPattern::FigureEight:
+                origin.x = frand(28, 100);
+                break;
+            case MovementPattern::VDive:
+                count = std::min(count, 5) | 1;  // a leader and pairs behind it
+                origin.x = frand(34, 94);
+                spacing = 0;
+                break;
+            case MovementPattern::Strafe:
+                count = std::min(count, 4);
+                origin.y = 20 + irand(0, 2) * 10;
+                spacing = 150;
+                break;
             default:
                 break;
         }
@@ -190,6 +226,11 @@ void World::build_wave() {
             s.dir = dir;
             if (pattern == MovementPattern::Hover) {
                 s.origin.x = SCREEN_W / 2 + (i - (count - 1) / 2.0f) * 20;
+            } else if (pattern == MovementPattern::Strafe) {
+                s.origin.x = SCREEN_W / 2 + (i - (count - 1) / 2.0f) * 22;
+            } else if (pattern == MovementPattern::VDive) {
+                int rank = (i + 1) / 2;  // 0 is the leader, then a pair per rank
+                s.origin = Vec2(origin.x + (i % 2 ? -11 : 11) * rank, rank * 7);
             }
         }
         t += count * spacing + gap;
@@ -230,18 +271,46 @@ void World::kill_enemy(Enemy &e) {
 }
 
 void World::player_hit() {
+    if (god) return;
     hit_this_wave = true;
     combo = 0;
     combo_ms = 0;
     bool last_life = player.hit();
-    if (!player.alive) {
-        // clear the screen of bullets so the respawn is fair
+    if (player.repairing() || last_life) {
+        // a life lost: clear the screen of bullets so the repair is fair
         ProjectileManager::get_instance().clear_enemy_bullets(true);
+    }
+    if (player.repairing()) {
+        adjust_difficulty(-DIFFICULTY_DOWN);
+        if (story::repairs.count > 0) {
+            comms.say(story::repairs.lines[repair_line++ % story::repairs.count], Player::REPAIR_MS);
+        }
     }
     if (last_life) {
         set_phase(Phase::Over, OVER_MS);
         audio::stop_music();
     }
+}
+
+void World::skip_wave() {
+    if (phase != Phase::Fighting && phase != Phase::BossFight) return;
+    schedule_next = schedule_count;
+    for (auto &e : enemies) {
+        if (e.active) kill_enemy(e);
+        e.active = false;
+    }
+    if (boss.active && !boss.dying) {
+        boss.take_damage(boss.health);
+        ProjectileManager::get_instance().clear_enemy_bullets(true);
+    }
+}
+
+void World::max_power() {
+    player.weapon = Player::MAX_WEAPON;
+    player.rapid_ms = 10000;
+    for (int i = 0; i < Player::MAX_SHIELDS; i++) player.add_shield();
+    if (!player.repairing()) player.hull = Player::MAX_HULL;
+    player.lives = 9;
 }
 
 void World::collect(PowerUp &p) {
@@ -258,7 +327,7 @@ void World::collect(PowerUp &p) {
             audio::play(audio::Sfx::PowerUp);
             break;
         case PowerUpKind::Shield:
-            player.shield_ms = 10000;
+            player.add_shield();
             audio::play(audio::Sfx::Shield);
             break;
         case PowerUpKind::Repair:
@@ -359,6 +428,8 @@ void World::update(uint32_t dt) {
                 int nth = (wave - 1) % story::WAVES_PER_CHAPTER;  // 0 = first wave of the chapter
                 if (ch > 1 && nth == 0) {
                     play(story::chapters[ch - 1].start, After::Wave);  // chapter 1 had the intro instead
+                } else if (ch > 0 && nth == story::MEETING_WAVE - 1) {
+                    play(story::chapters[ch - 1].meeting, After::Wave);
                 } else if (ch > 0 && nth == story::RADIO_WAVE - 1) {
                     play(story::chapters[ch - 1].radio, After::Wave);
                 } else {
@@ -392,7 +463,10 @@ void World::update(uint32_t dt) {
             for (auto &e : enemies) any_alive |= e.active;
             if (schedule_next >= schedule_count && !any_alive && player.alive) {
                 perfect_bonus = !hit_this_wave;
-                if (perfect_bonus) add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
+                if (perfect_bonus) {
+                    add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
+                    adjust_difficulty(DIFFICULTY_UP);
+                }
                 audio::play(audio::Sfx::WaveClear);
                 set_phase(Phase::Cleared, CLEARED_MS);
             }
@@ -425,7 +499,12 @@ void World::update(uint32_t dt) {
                 boss.active = false;
                 boss.dying = false;
                 perfect_bonus = !hit_this_wave;
-                if (perfect_bonus) add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
+                if (perfect_bonus) {
+                    add_score(PERFECT_BONUS, Vec2(SCREEN_W / 2, 80), false);
+                    adjust_difficulty(DIFFICULTY_UP);
+                }
+                // the Tollgate is down: the convoy goes through
+                if (chapter() == 2) convoy_ms = 1;
                 set_phase(Phase::Cleared, CLEARED_MS + 1200);
                 audio::play_song(stage_song());
             }
@@ -456,9 +535,10 @@ void World::update(uint32_t dt) {
             break;
     }
 
-    // Juno flies on the player's wing through chapter 2
-    if (chapter() == 2 && !wingman.active) wingman.join();
-    if (chapter() != 2 && wingman.active) wingman.leave();
+    // a friend on the wing: one leaves before the next one joins
+    int wing = wing_sprite();
+    if (wingman.active && wingman.sprite != wing) wingman.leave();
+    if (!wingman.active && wing) wingman.join(wing);
 
     // while someone talks, the ship flies itself to the middle, clear of the text box (A turns the page, it doesn't fire)
     player.autopilot = phase == Phase::Story;
@@ -466,15 +546,43 @@ void World::update(uint32_t dt) {
 
     Vec2 target = player.alive ? player.position : Vec2(SCREEN_W / 2, SCREEN_H);
     player.update(dt);
+    comms.update(dt);
     wingman.update(dt, player);
+    update_convoy(dt);
     for (auto &e : enemies) e.update(dt, target, player.alive);
+    boss.pace_scale = difficulty;
     boss.update(dt, target, player.alive);
     powerups.update(dt);
     ProjectileManager::get_instance().update(dt);
     if (phase != Phase::Over) handle_collisions();
 }
 
+void World::update_convoy(uint32_t dt) {
+    // one ship after another, while the chapter lasts
+    if (convoy_ms > 0 && chapter() == 2 && convoy_count < CONVOY_SHIPS) {
+        convoy_ms -= dt;
+        if (convoy_ms <= 0) {
+            convoy[convoy_count++] = {frand(8, SCREEN_W - 8), SCREEN_H + 8, frand(0.03f, 0.05f),
+                                      CONVOY_SPRITES[irand(0, 7)]};
+            convoy_ms = convoy_count < CONVOY_SHIPS ? CONVOY_GAP_MS : 0;
+        }
+    }
+    for (int i = 0; i < convoy_count; i++) convoy[i].y -= convoy[i].speed * dt;
+}
+
+void World::draw_convoy(uint32_t time) {
+    for (int i = 0; i < convoy_count; i++) {
+        const ConvoyShip &c = convoy[i];
+        if (c.y < -8) continue;
+        draw_flame(Vec2(c.x, c.y), 0, true, time + i * 37);
+        draw_sprite(sheets.ships, c.sprite, Vec2(c.x, c.y), Size(1, 1), SpriteTransform::VERTICAL);  // facing up
+    }
+}
+
 void World::draw(uint32_t time) {
+    draw_convoy(time);
+    // behind the action so it never hides the boss or a bullet; under the boss's health bar
+    comms.draw(boss.active ? HUD_H + 8 : HUD_H + 1);
     powerups.draw(time);
     for (auto &e : enemies) e.draw();
     boss.draw(time);
@@ -549,9 +657,10 @@ void World::draw_hud(uint32_t time) {
         screen.text("R", minimal_font, Point(x - 6, SCREEN_H - 7));
         x -= 7;
     }
-    if (player.shield_ms > 0) {
+    if (player.shielded()) {
+        snprintf(buf, sizeof(buf), "S%d", player.shields);
         screen.pen = (player.shield_ms > 2000 || (time / 120) % 2) ? Pen(120, 220, 255) : Pen(40, 90, 120);
-        screen.text("S", minimal_font, Point(x - 6, SCREEN_H - 7));
+        screen.text(buf, minimal_font, Point(x - 10, SCREEN_H - 7));
     }
 
     // boss health

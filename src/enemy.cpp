@@ -9,14 +9,21 @@ namespace {
         { 4,  1,  50,  FireStyle::None,   0,    1.10f, 4},   // Drone
         { 6,  2,  100, FireStyle::Down,   1900, 1.00f, 6},   // Bug
         {17,  3,  150, FireStyle::Aimed,  2100, 0.95f, 8},   // Wasp
-        {39,  5,  250, FireStyle::Spread, 2400, 0.85f, 12},  // Crab
-        {47,  10, 400, FireStyle::Burst,  2800, 0.70f, 20},  // Tank
+        {39,  5,  250, FireStyle::Spread, 3000, 0.85f, 12},  // Crab
+        {47,  10, 400, FireStyle::Burst,  4000, 0.70f, 20},  // Tank
     };
 
     constexpr float LOOP_RADIUS = 16.0f;
     constexpr float LOOP_SPEED = 3.0f;    // radians per second
     constexpr float HOVER_ENTER_S = 1.2f;
     constexpr float HOVER_STAY_S = 5.0f;
+    constexpr float EIGHT_Y = 42;         // FigureEight: centre of the eight
+    constexpr float V_ENTER_S = 1.3f;     // VDive: fly in as a V, wait, then dive
+    constexpr float V_WAIT_S = 0.6f;
+    constexpr float STRAFE_SLIDE_S = 0.8f;
+    constexpr float STRAFE_STOP_S = 0.7f;
+    constexpr int STRAFE_STOPS = 4;
+    constexpr int BURST_SHOTS = 2;        // Tank: shots per volley
 
     float ease_out(float t) { return 1.0f - (1.0f - t) * (1.0f - t); }
 }
@@ -37,6 +44,7 @@ void Enemy::spawn(EnemyKind k, MovementPattern p, Vec2 o, float d, float spd, fl
     age = 0;
     flash_ms = 0;
     burst_left = 0;
+    holding = false;
     fire_timer = (int32_t)(preset.fire_ms * frand(0.3f, 0.9f));
     entered = false;
     active = true;
@@ -74,6 +82,54 @@ void Enemy::move(uint32_t dt, Vec2 player_pos) {
         case MovementPattern::Sweep: {
             float x = dir > 0 ? -8 + 42 * t : SCREEN_W + 8 - 42 * t;
             position = Vec2(x, origin.y + sinf(t * 2.6f) * 8 + 6 * t);
+            break;
+        }
+        case MovementPattern::FigureEight: {
+            // down to the eight, twice round it, then away down the screen
+            const float descend_s = (EIGHT_Y + 6) / 50.0f;
+            const float eight_s = 2 * 2 * PI_F / 2.2f;
+            if (t < descend_s) {
+                position = Vec2(origin.x, -6 + 50 * t);
+            } else if (t < descend_s + eight_s) {
+                float a = (t - descend_s) * 2.2f;
+                position = Vec2(origin.x + dir * 20 * sinf(a), EIGHT_Y + 9 * sinf(2 * a));
+            } else {
+                position = Vec2(origin.x, EIGHT_Y + 50 * (t - descend_s - eight_s));
+            }
+            break;
+        }
+        case MovementPattern::VDive: {
+            float ts = age / 1000.0f;
+            float top = 30 - origin.y;  // the leader flies lowest, the wings trail behind it
+            if (ts < V_ENTER_S) {
+                position = Vec2(origin.x, lerpf(-8 - origin.y, top, ease_out(ts / V_ENTER_S)));
+                dive_x = player_pos.x + (origin.x - SCREEN_W / 2);  // keep the V's shape in the dive
+            } else if (ts > V_ENTER_S + V_WAIT_S) {
+                float step = dt / 1000.0f;
+                position.y += 80 * speed * step;
+                position.x += clampf(dive_x - position.x, -35 * step, 35 * step);
+            }
+            break;
+        }
+        case MovementPattern::Strafe: {
+            // in to its row, then slides left and right, stopping to fire, and leaves down the screen
+            float ts = age / 1000.0f;
+            const float cycle = STRAFE_SLIDE_S + STRAFE_STOP_S;
+            holding = true;
+            if (ts < HOVER_ENTER_S) {
+                position = Vec2(origin.x, lerpf(-8, origin.y, ease_out(ts / HOVER_ENTER_S)));
+            } else if (ts < HOVER_ENTER_S + cycle * STRAFE_STOPS) {
+                float s = ts - HOVER_ENTER_S;
+                int k = (int)(s / cycle);
+                float in = s - k * cycle;
+                auto stop_x = [&](int n) { return n < 0 ? origin.x : origin.x + dir * (n % 2 ? -16.0f : 16.0f); };
+                holding = in < STRAFE_SLIDE_S;
+                float f = holding ? ease_out(in / STRAFE_SLIDE_S) : 1.0f;
+                position = Vec2(lerpf(stop_x(k - 1), stop_x(k), f), origin.y);
+            } else {
+                holding = false;
+                position.y += 45 * speed * dt / 1000.0f;
+            }
             break;
         }
         case MovementPattern::Hover: {
@@ -136,6 +192,7 @@ void Enemy::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
     bool can_fire = position.y > HUD_H + 2 && position.y < SCREEN_H * 3 / 4 && position.y < player_pos.y - 12;
     fire_timer -= (int32_t)(dt * fire_rate);
     if (fire_timer > 0) return;
+    if (holding && burst_left == 0) return;  // a strafer saves its shot for the next stop
 
     if (burst_left > 0) {
         if (can_fire) shoot(player_pos);
@@ -146,7 +203,7 @@ void Enemy::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
     if (can_fire) {
         shoot(player_pos);
         if (preset.fire == FireStyle::Burst) {
-            burst_left = 2;
+            burst_left = BURST_SHOTS - 1;
             fire_timer = 140;
             return;
         }
@@ -179,6 +236,8 @@ namespace {
     constexpr float BOSS_Y = 26;
     constexpr uint32_t BOSS_DEATH_MS = 1800;
     constexpr int BEAM_HALF_W = 2;  // the beam is 5 px wide
+    constexpr float SWING = 38;     // px either side of the middle
+    constexpr int32_t DASH_WARN_MS = 300, DASH_MOVE_MS = 450;
 
     struct BossPreset {
         int sprite;
@@ -224,7 +283,8 @@ void Boss::spawn(int lvl) {
     flash_ms = 0;
     beam_ms = 0;
     spiral_angle = 0;
-    move_s = 0;
+    move_phase = 0;
+    dash_ms = 0;
     dying = false;
     dying_ms = 0;
     active = true;
@@ -313,7 +373,7 @@ void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
     }
 
     bool enraged = health * 2 < max_health;
-    float pace = 1.0f + 0.12f * (level - 1) + (enraged ? 0.35f : 0.0f);
+    float pace = (1.0f + 0.12f * (level - 1) + (enraged ? 0.35f : 0.0f)) * pace_scale;
 
     if (beam_ms > 0) {
         // hold still and fire
@@ -331,8 +391,15 @@ void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
         return;
     }
 
-    move_s += dt / 1000.0f;
-    position = Vec2(SCREEN_W / 2 + sinf(move_s * 0.7f * pace) * 38, BOSS_Y + sinf(t * 1.3f) * 5);
+    float bob = BOSS_Y + sinf(t * 1.3f) * 5;
+    if (dash_ms > 0) {
+        update_dash(dt);
+        position.y = bob;
+        return;
+    }
+    // the swing's phase adds up, so a change of pace never makes the boss jump
+    move_phase += dt / 1000.0f * 0.7f * pace;
+    position = Vec2(SCREEN_W / 2 + sinf(move_phase) * SWING, bob);
 
     if (!player_alive) return;
     attack_timer -= (int32_t)(dt * pace);
@@ -348,7 +415,36 @@ void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
 
     fire(p.attacks[attack], player_pos, enraged);
     shots_left--;
-    if (shots_left == 0) attack_timer = enraged ? 650 : 1000;
+    if (shots_left == 0) {
+        attack_timer = enraged ? 650 : 1000;
+        // between attacks it sometimes dashes over the player's column, more often when enraged
+        if (irand(1, 100) <= (enraged ? 55 : 25) && fabsf(player_pos.x - position.x) > 16) start_dash(player_pos);
+    }
+}
+
+bool Boss::dash_warning() const {
+    return dash_ms > DASH_MOVE_MS;
+}
+
+void Boss::start_dash(Vec2 player_pos) {
+    dash_ms = DASH_WARN_MS + DASH_MOVE_MS;
+    dash_from = position.x;
+    dash_to = clampf(player_pos.x, SCREEN_W / 2 - SWING, SCREEN_W / 2 + SWING);
+    audio::play(audio::Sfx::BeamCharge);
+}
+
+void Boss::update_dash(uint32_t dt) {
+    dash_ms -= dt;
+    if (dash_warning()) return;  // shakes in place, see draw
+    float k = 1.0f - std::max<int32_t>(0, dash_ms) / (float)DASH_MOVE_MS;
+    k = k * k * (3 - 2 * k);  // ease in and out
+    position.x = lerpf(dash_from, dash_to, k);
+    if (dash_ms <= 0) {
+        dash_ms = 0;
+        // carry on swinging from where the dash ended
+        move_phase = asinf(clampf((position.x - SCREEN_W / 2) / SWING, -1, 1));
+        fx::shake(1.5f);
+    }
 }
 
 bool Boss::beam_hits(const Rect &r) const {
@@ -370,6 +466,7 @@ bool Boss::take_damage(int amount) {
         dying = true;
         dying_ms = BOSS_DEATH_MS;
         beam_ms = 0;
+        dash_ms = 0;
         return true;
     }
     return false;
@@ -408,6 +505,13 @@ void Boss::draw(uint32_t time) {
         }
     }
 
+    if (dash_warning()) {
+        // about to dash: it shakes and flashes
+        Vec2 shake(((time / 30) % 2) ? 1 : -1, 0);
+        if ((time / 60) % 2) draw_sprite_flash(sheets.ships, sprite_index(), position + shake, Size(2, 2), Pen(255, 200, 80));
+        else draw_sprite(sheets.ships, sprite_index(), position + shake, Size(2, 2));
+        return;
+    }
     if (flash_ms > 0) draw_sprite_flash(sheets.ships, sprite_index(), position, Size(2, 2));
     else draw_sprite(sheets.ships, sprite_index(), position, Size(2, 2));
 }

@@ -3,7 +3,7 @@
 #include "common.hpp"
 
 enum class EnemyKind : uint8_t { Drone, Bug, Wasp, Crab, Tank, COUNT };
-enum class MovementPattern : uint8_t { StraightDown, ZigZag, Swoop, Loop, Sweep, Hover };
+enum class MovementPattern : uint8_t { StraightDown, ZigZag, Swoop, Loop, Sweep, Hover, FigureEight, VDive, Strafe };
 enum class FireStyle : uint8_t { None, Down, Aimed, Spread, Burst };
 
 struct EnemyPreset {
@@ -24,7 +24,7 @@ public:
     EnemyKind kind = EnemyKind::Drone;
     MovementPattern pattern = MovementPattern::StraightDown;
     Vec2 position;
-    Vec2 origin;          // spawn x / slot position, depends on pattern
+    Vec2 origin;          // spawn x / slot position, depends on pattern (VDive: y is the place in the V)
     float dir = 1;        // -1 or 1, mirrors the path
     float speed = 1;      // difficulty multiplier
     float fire_rate = 1;  // difficulty multiplier
@@ -47,7 +47,8 @@ public:
 private:
     void move(uint32_t dt, Vec2 player_pos);
     void shoot(Vec2 player_pos);
-    float dive_x = 0;     // Hover: x target when diving
+    float dive_x = 0;     // Hover and VDive: x target when diving
+    bool holding = false; // Strafe: true while sliding, it only fires when it stops
 };
 
 // What a boss can do. Each boss has its own list and goes round it.
@@ -70,7 +71,10 @@ public:
     uint8_t attack = 0;   // index into this boss's attack list
     uint8_t shots_left = 0;
     float spiral_angle = 0;
-    float move_s = 0;     // time spent moving, it holds still while it fires a beam
+    float move_phase = 0; // where it is in its side to side swing; it holds still while it fires a beam
+    float pace_scale = 1; // the story mode difficulty, scales its pace
+    int32_t dash_ms = 0;  // > 0 during a dash: a short warning, then a fast slide to dash_to
+    float dash_from = 0, dash_to = 0;
     bool active = false;
     bool dying = false;
 
@@ -89,6 +93,9 @@ public:
 
 private:
     bool beam_firing() const { return beam_ms > 0 && beam_ms <= BEAM_FIRE_MS; }
+    bool dash_warning() const;
+    void start_dash(Vec2 player_pos);
+    void update_dash(uint32_t dt);
     void start_attack(BossAttack a, bool enraged);
     void fire(BossAttack a, Vec2 player_pos, bool enraged);
 };

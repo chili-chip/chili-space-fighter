@@ -13,11 +13,11 @@ end lists the new art each place needs to look finished.
 | Chapter | Place | Screenshot | Sky and stars | Props |
 | --- | --- | --- | --- | --- |
 | 1. The Show | Halo Station | ![Halo Station](img/bg-chapter-1.png) | Clean dark blue, cool white stars | Cyan lane lights along both edges, blinking in a running pattern |
-| 2. No Papers | The Tollgate | ![The Tollgate](img/bg-chapter-2.png) | Warm brown haze, amber stars | Gate rings (misc 63, 16x16) drifting down, amber warning lights on both edges |
+| 2. No Papers | The Tollgate | ![The Tollgate](img/bg-chapter-2.png) | Warm brown haze, amber stars | Amber warning lights on both edges. After the boss, Juno's convoy flies up the screen (see [Ships](ships.md#the-convoy)) |
 | 3. The Yards | The Rust Ring | ![The Rust Ring](img/bg-chapter-3.png) | Rust brown, dusty stars | Big and small rocks (misc 28 at 16x16, misc 40 at 8x8), flipped at random, at different speeds |
 | 4. Old Wings | The Drift | ![The Drift](img/bg-chapter-4.png) | Deep purple, lilac stars | Slow soft gas clouds, drawn as overlapping see-through circles |
 | 5. The Signal | Glimmer | ![Glimmer](img/bg-chapter-5.png) | Dark magenta, pink and cyan stars | Pink crystal sparkles (misc 84 to 86) that twinkle through three frames |
-| 6. Open Sky | Halo Station in lockdown | ![Halo in lockdown](img/bg-chapter-6.png) | Dark, so the red enemy bullets still show | Red alarm lights flashing together on both edges, shut gate rings (misc 61) |
+| 6. Open Sky | Halo Station in lockdown | ![Halo in lockdown](img/bg-chapter-6.png) | Dark, so the red enemy bullets still show | Red alarm lights flashing together on both edges |
 
 The background changes on the chapter card, at the first wave of the chapter. A retried chapter
 starts with its own background. To change one, edit `THEMES` in `src/starfield.cpp`.
@@ -37,7 +37,7 @@ says where it would go; a new `assets/backgrounds.png` keeps the existing sheets
 | 2 | Tollgate pillar | 16x32 | 1 (flip for the other side) | The gate's pillars at the screen edges | backgrounds |
 | 2 | Gate arch | 32x16 | 2 (open, closed) | The arch the convoy flies through | backgrounds |
 | 2 | Warning light | 8x8 | 4 | Amber rotating light on the pillars | backgrounds |
-| 2 | Convoy ship | 8x8 | 2 | The families' old ships, far away in the back layer | ships or backgrounds |
+| 2 | Convoy ship | 8x8 | 2 | The families' old ships going through the gate after the boss. For now the game uses small ships from `ships.png` that are not Wardens | ships or backgrounds |
 | 3 | Rust asteroids | 16x16 | 3 kinds | Brown and orange rocks, to replace the grey ones | backgrounds |
 | 3 | Factory crane | 32x16 | 1 | Yards cranes and frames in the far layer | backgrounds |
 | 3 | Conveyor with drones | 32x8 | 2 | Half-built Wardens on a line, stopped after the boss | backgrounds |
