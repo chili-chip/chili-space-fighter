@@ -3,7 +3,8 @@
 #include "common.hpp"
 
 enum class EnemyKind : uint8_t { Drone, Bug, Wasp, Crab, Tank, COUNT };
-enum class MovementPattern : uint8_t { StraightDown, ZigZag, Swoop, Loop, Sweep, Hover, FigureEight, VDive, Strafe };
+// Drop is only for drones launched by a boss, it is never picked for a wave
+enum class MovementPattern : uint8_t { StraightDown, ZigZag, Swoop, Loop, Sweep, Hover, FigureEight, VDive, Strafe, Drop };
 enum class FireStyle : uint8_t { None, Down, Aimed, Spread, Burst };
 
 struct EnemyPreset {
@@ -52,13 +53,14 @@ private:
 };
 
 // What a boss can do. Each boss has its own list and goes round it.
-enum class BossAttack : uint8_t { Fan, Burst, Spiral, Ring, Rain, Beam };
+enum class BossAttack : uint8_t { Fan, Burst, Spiral, Ring, Rain, Beam, Drones };
 
 // Big ship at the end of every chapter (every tenth wave).
 class Boss {
 public:
     static constexpr int32_t BEAM_CHARGE_MS = 750;  // the warning line before the beam
     static constexpr int32_t BEAM_FIRE_MS = 950;
+    static constexpr int32_t DEATH_MS = 1800;
 
     Vec2 position;
     int health = 0, max_health = 1;
@@ -70,6 +72,7 @@ public:
     int32_t beam_ms = 0;  // counts down through the charge, then the beam; 0 when there is no beam
     uint8_t attack = 0;   // index into this boss's attack list
     uint8_t shots_left = 0;
+    uint8_t launches = 0; // drones it has launched that the world has not spawned yet
     float spiral_angle = 0;
     float move_phase = 0; // where it is in its side to side swing; it holds still while it fires a beam
     float pace_scale = 1; // the story mode difficulty, scales its pace
@@ -88,6 +91,7 @@ public:
     int sprite_index() const;
     // true while the beam is firing and touches r
     bool beam_hits(const Rect &r) const;
+    bool has_attack(BossAttack a) const;
 
     Rect get_hitbox() const { return Rect(position.x - 7, position.y - 6, 14, 12); }
 

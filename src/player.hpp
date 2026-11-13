@@ -43,15 +43,16 @@ private:
     uint32_t anim_time = 0;
 };
 
-// A friendly fighter on the player's wing (Rook's Crimson in chapter 1, Juno's Sunset in chapter 2).
+// A friendly fighter on the player's wing (see wing_sprites() in world.cpp for who flies when).
 // It can't be hit, and fires when the player fires.
 class Wingman {
 public:
     Vec2 position;
     int sprite = 0;  // centre frame in assets/ships.png, tilt frames are -1 / +1
     bool active = false;
+    bool pair = false;  // two wingmen: each keeps its own side instead of swapping near the edges
 
-    void join(int sprite);  // flies in from below
+    void join(int sprite, float side);  // flies in from below, on the left (-1) or right (1) wing
     void leave();  // flies off the top of the screen
     void update(uint32_t dt, const Player &player);
     void draw(uint32_t time);

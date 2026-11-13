@@ -10,7 +10,7 @@ namespace {
         { 6,  2,  100, FireStyle::Down,   1900, 1.00f, 6},   // Bug
         {17,  3,  150, FireStyle::Aimed,  2100, 0.95f, 8},   // Wasp
         {39,  5,  250, FireStyle::Spread, 3000, 0.85f, 12},  // Crab
-        {47,  10, 400, FireStyle::Burst,  4000, 0.70f, 20},  // Tank
+        {47,  10, 400, FireStyle::Burst,  5000, 0.70f, 20},  // Tank
     };
 
     constexpr float LOOP_RADIUS = 16.0f;
@@ -132,6 +132,10 @@ void Enemy::move(uint32_t dt, Vec2 player_pos) {
             }
             break;
         }
+        case MovementPattern::Drop:
+            // falls out of the boss, drifting to one side
+            position = Vec2(origin.x + dir * 18 * t * t, origin.y + 45 * t);
+            break;
         case MovementPattern::Hover: {
             float ts = age / 1000.0f;  // hovering ignores the speed multiplier for timing
             if (ts < HOVER_ENTER_S) {
@@ -169,7 +173,7 @@ void Enemy::shoot(Vec2 player_pos) {
             for (int i = -1; i <= 1; i++) pm.fire(muzzle, bullet_speed, PI_F + i * 0.35f, 21, Faction::ENEMY);
             break;
         case FireStyle::Burst:
-            pm.fire_at(muzzle, player_pos, bullet_speed * 1.2f, 12);
+            pm.fire_at(muzzle, player_pos, bullet_speed, 12);
             break;
     }
 }
@@ -234,7 +238,6 @@ void Enemy::draw() {
 
 namespace {
     constexpr float BOSS_Y = 26;
-    constexpr uint32_t BOSS_DEATH_MS = 1800;
     constexpr int BEAM_HALF_W = 2;  // the beam is 5 px wide
     constexpr float SWING = 38;     // px either side of the middle
     constexpr int32_t DASH_WARN_MS = 300, DASH_MOVE_MS = 450;
@@ -254,8 +257,8 @@ namespace {
         {64, {BossAttack::Fan, BossAttack::Burst}, 2, {0}, 0, Pen()},
         // the Tollgate: the gate closing (fan), papers checks (aimed bursts), and its scanner eye
         {66, {BossAttack::Fan, BossAttack::Beam, BossAttack::Burst}, 3, {0}, 1, Pen(255, 160, 40)},
-        // the Cradle drops its eggs, and rings of bullets from the hangar
-        {68, {BossAttack::Rain, BossAttack::Ring, BossAttack::Rain, BossAttack::Burst}, 4, {0}, 0, Pen()},
+        // the Cradle drops its eggs, launches drones, and fires rings of bullets from the hangar
+        {68, {BossAttack::Rain, BossAttack::Drones, BossAttack::Ring, BossAttack::Drones}, 4, {0}, 0, Pen()},
         // the Paragon, Rook's fighter: fast aimed bursts and a long beam
         {84, {BossAttack::Burst, BossAttack::Beam, BossAttack::Fan}, 3, {0}, 1, Pen(120, 220, 255)},
         // the Prism, the jammer: spirals and rings of signal
@@ -298,6 +301,7 @@ void Boss::start_attack(BossAttack a, bool enraged) {
         case BossAttack::Spiral: shots_left = (enraged ? 24 : 16) + 4 * l; break;
         case BossAttack::Ring: shots_left = enraged ? 4 : 3; break;
         case BossAttack::Rain: shots_left = (enraged ? 16 : 11) + 2 * l; break;
+        case BossAttack::Drones: shots_left = enraged ? 4 : 3; break;
         case BossAttack::Beam:
             shots_left = 1;
             beam_ms = BEAM_CHARGE_MS + BEAM_FIRE_MS;
@@ -343,9 +347,21 @@ void Boss::fire(BossAttack a, Vec2 player_pos, bool enraged) {
                     Faction::ENEMY, 1, 2.5f);
             attack_timer = enraged ? 90 : 130;
             break;
+        case BossAttack::Drones:  // one at a time from the hangar; the world spawns them
+            launches++;
+            attack_timer = 420;
+            break;
         case BossAttack::Beam:
             break;  // handled in update
     }
+}
+
+bool Boss::has_attack(BossAttack a) const {
+    const BossPreset &p = preset(level);
+    for (int i = 0; i < p.attack_count; i++) {
+        if (p.attacks[i] == a) return true;
+    }
+    return false;
 }
 
 void Boss::update(uint32_t dt, Vec2 player_pos, bool player_alive) {
@@ -464,7 +480,7 @@ bool Boss::take_damage(int amount) {
     if (health <= 0) {
         health = 0;
         dying = true;
-        dying_ms = BOSS_DEATH_MS;
+        dying_ms = DEATH_MS;
         beam_ms = 0;
         dash_ms = 0;
         return true;

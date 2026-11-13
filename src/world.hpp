@@ -17,7 +17,7 @@ public:
     enum class Mode { Story, Endless };
 
     Player player;
-    Wingman wingman;  // Rook in chapter 1, Juno in chapter 2
+    Wingman wingmen[2];  // friends on the wing, see wing_sprite()
     Boss boss;
     PowerUpManager powerups;
 
@@ -95,7 +95,8 @@ private:
     void begin_wave();
     void spawn_boss();
     void next_wave();
-    int wing_sprite() const;
+    int wing_sprite(int slot) const;
+    void draw_rescue(uint32_t time);
     void adjust_difficulty(float step);
     void update_convoy(uint32_t dt);
     void draw_convoy(uint32_t time);

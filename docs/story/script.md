@@ -335,7 +335,8 @@ Do not worry. I have rebuilt worse than this. Hold still and try again.
 
 ## Chapter 4: Old Wings
 
-Waves 31 to 40. The Drift. Boss: the Paragon, flown by Rook.
+Waves 31 to 40. The Drift. Boss: the Paragon, flown by Rook. Ossa's Nebula and Doc's borrowed
+Viper fly on Nova's wings all chapter.
 
 ### Chapter card
 
@@ -362,6 +363,12 @@ I don't have anywhere else to be. And I don't think I'd leave if I did.
 
 [DOC 1]
 That'll do for an answer. I'm Doc. I patch up whoever comes through that door, so do me a kindness and wear your helmet out there.
+
+[OSSA 1]
+Then we fly together. I will take the purple one. It is the ugliest thing I have ever seen, and I love it.
+
+[DOC 4]
+And I've borrowed Zix's Viper, so I can stay close. Somebody has to be nearby when you need patching up.
 ```
 
 ### Radio
@@ -389,7 +396,7 @@ This is the Paragon. The best ship the Concord ever built, for the best pilot it
 ### After the boss
 
 ```text
-(Rook's pod ejects. Doc's skiff picks it up.)
+(Doc's ship locks a beam on the Paragon and pulls Rook aboard, a moment before it explodes)
 
 [DOC 2]
 Easy now. You've got a cracked visor and some badly bruised pride, but you'll live. Stop trying to sit up.
@@ -408,11 +415,6 @@ The same as me. I believed it too, right up until I read the Marshal's signature
 
 [OSSA 3]
 So did many of us, once. That is why the doors stay open, Rook. Rest. Decide tomorrow.
-
-[OSSA 3]
-And somebody find me a ship. That purple one. It is the ugliest thing I have ever seen, and I love it.
-
-(Ossa takes the Nebula fighter)
 ```
 
 ### Game over
@@ -516,7 +518,8 @@ We've lost the signal... Nova? Nova, if you can hear me, find it again. Please.
 
 ## Chapter 6: Open Sky
 
-Waves 51 to 60. Halo Station. Boss: the Bulwark, flown by Marshal Brask.
+Waves 51 to 60. Halo Station. Boss: the Bulwark, flown by Marshal Brask. Rook's Crimson flies on
+Nova's wing all chapter.
 
 ### Chapter card
 
